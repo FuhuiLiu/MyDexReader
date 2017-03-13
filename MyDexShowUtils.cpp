@@ -236,6 +236,20 @@ void MyDexShowUtils::showAllClasses()	//显示所有class信息
 			m_pDexObj->getClassClassDataOffValueFromIndex(i),
             m_pDexObj->getClassStaticValuesOffValueFromIndex(i));
 		delete[] (char *)pFlags;
+        //interfaces_off_信息
+        if (m_pDexObj->isClassNeedShowInterfacesString(i))
+        {
+            const char *p = m_pDexObj->getClassInterfacesStringFromIndex(i);
+            printf("\t%s\r\n", p);
+            delete[] (char *)p;
+        }
+        //annotations_off_ 信息
+        if (m_pDexObj->isClassNeedShowAnnotationsString(i))
+        {
+            const char *p = m_pDexObj->getClassAnnotationStringFromIndex(i);
+            printf("\t%s\r\n", p);
+            delete[] (char *)p;
+        }
 	}
     MsgEnd("AllClasses");
 }

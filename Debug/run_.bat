@@ -1,0 +1,1 @@
+del /f ft.log && MyDexReader.exe classes.dex >> ft.log

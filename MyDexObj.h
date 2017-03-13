@@ -115,6 +115,31 @@ public:
 	const char* getClassAccessFlagsStringFromIndex(uint nIndex);		//获取指定下标的ClassDef结构中的access_flags_的字符串,返回值需要手动做数组释放
 	const char* getClassSuperClassIdxStringFromIndex(uint nIndex);		//获取指定下标的ClassDef结构中的superclass_idx_的字符串
 	const char* getClassSourceFileIdxStringFromIndex(uint nIndex);		//获取指定下标的ClassDef结构中的source_file_idx_的字符串
+    //根据相应Class结构中的class_annotations_off_判断是否需要输出相关信息
+    bool isClassNeedShowAnnotationsString(uint nIndex);
+    //获取相应Class结构中的class_annotations_off_结构数据,返回值需要手动释放
+    const char* getClassAnnotationStringFromIndex(uint nIndex);
+    //获取指定下标的STAnnotationsDirectoryItem结构指针
+    PSTAnnotationsDirectoryItem getClassAnnotationsDirectoryItemSTFromIndex(uint nIndex);
+    
+    //获取相应Class结构中的class_annotations_off_结构中class_annotations_off_字段值
+    uint32_t getClassAnnotationsClassAnnotationsOffValueFromIndex(uint nIndex);
+    //获取相应Class结构中的class_annotations_off_结构中fields_size_字段值
+    uint32_t getClassAnnotationsFieldsSizeValueFromIndex(uint nIndex);
+    //获取相应Class结构中的class_annotations_off_结构中methods_size_字段值
+    uint32_t getClassAnnotationsMethodsSizeValueFromIndex(uint nIndex);
+    //获取相应Class结构中的class_annotations_off_结构中parameters_size_字段值
+    uint32_t getClassAnnotationsParametersSizeValueFromIndex(uint nIndex);
+
+    
+    //根据相应Class结构中的interfaces_off_判断是否需要输出相关信息
+    bool isClassNeedShowInterfacesString(uint nIndex);
+    //获取相应Class结构中的class_annotations_off_结构数据,返回值需要手动释放
+    const char* getClassInterfacesStringFromIndex(uint nIndex);
+    //获取指定Class下标的interfaces_off_结构下的list_结构指针
+    PSTTypeList getClassInterfaceListSTFromIndex(uint nIndex);   
+    //获取指定Class下标的interfaces_off_结构下的list_结构数量
+    uint32_t getClassInterfaceListSizeFromIndex(uint nIndex);
 
 protected:
 private:

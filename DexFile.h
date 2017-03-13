@@ -102,7 +102,7 @@ typedef struct ProtoId {
 // Raw type_item. TypeItem数组元素
 typedef struct TypeItem {
     uint16_t type_idx_;         // 基于type_ids的下标
-} STTypeItem;
+} STTypeItem, *PSTTypeItem;
 
 // Raw type_list. ProtoId结构中的参数类型指针实际结构
 typedef struct TypeList {
@@ -175,16 +175,17 @@ typedef struct ClassDef {
 #define kAccClassIsPhantomReference     0x01000000  // class is a phantom reference
 
 ////////////////////////////////////////////////////////////////Annotations
+//ClassDef->annotations_off_
 typedef struct AnnotationsDirectoryItem {
     uint32_t class_annotations_off_;    //指向AnnotationSetItem结构的文件指针
     uint32_t fields_size_;
     uint32_t methods_size_;
     uint32_t parameters_size_;
-} STAnnotationsDirectoryItem, *pSTAnnotationsDirectoryItem;
+} STAnnotationsDirectoryItem, *PSTAnnotationsDirectoryItem;
 
 typedef struct AnnotationSetItem {
-    uint32_t size_;
-    uint32_t entries_[1];
+    uint32_t size_;         //指示entries_结构数量
+    uint32_t entries_[1];   //每一个entries
 } STAnnotationSetItem, *pSTAnnotationSetItem;
 ////////////////////////////////////////////////////////////////Annotations
 

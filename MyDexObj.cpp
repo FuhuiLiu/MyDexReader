@@ -1280,10 +1280,10 @@ bool CMyDexObj::ColletionClassDefItem()
         }
 
         //uint annotations_off
-        pSTAnnotationsDirectoryItem pAnnotationsDirectoryItem = NULL;
+        PSTAnnotationsDirectoryItem pAnnotationsDirectoryItem = NULL;
         if (pST->annotations_off_ != 0)
         {
-            pAnnotationsDirectoryItem = (pSTAnnotationsDirectoryItem)
+            pAnnotationsDirectoryItem = (PSTAnnotationsDirectoryItem)
                 ((DWORD)pST->annotations_off_ + getFileBeginAddr());
             printf("\t class_annotations_off_:%X fields_size_:%X "
                 "methods_size_:%X parameters_size_:%X\r\n",
@@ -2010,4 +2010,114 @@ const char* CMyDexObj::getClassSuperClassIdxStringFromIndex(uint nIndex)
 const char* CMyDexObj::getClassSourceFileIdxStringFromIndex(uint nIndex)
 {
 	return getStringIdStringFromId(getClassSourceFileIdxValueFromIndex(nIndex));
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：根据相应Class结构中的class_annotations_off_判断是否需要输出相关信息
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+bool CMyDexObj::isClassNeedShowAnnotationsString(uint nIndex)
+{
+    return getClassAnnotationsOffValueFromIndex(nIndex) != 0;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取相应Class结构中的class_annotations_off_结构数据,返回值需要手动释放
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+const char* CMyDexObj::getClassAnnotationStringFromIndex(uint nIndex)
+{
+    char *result = new char[MAXBYTE * 4];
+    result[0] = '\0';
+    sprintf(result, "class_annotations_off_:%X fields_size_:%X "
+        "methods_size_:%X parameters_size_:%X",
+        getClassAnnotationsClassAnnotationsOffValueFromIndex(nIndex),
+        getClassAnnotationsFieldsSizeValueFromIndex(nIndex),
+        getClassAnnotationsMethodsSizeValueFromIndex(nIndex),
+        getClassAnnotationsParametersSizeValueFromIndex(nIndex));
+    return result;
+}
+//获取指定下标的STAnnotationsDirectoryItem结构指针
+PSTAnnotationsDirectoryItem CMyDexObj::getClassAnnotationsDirectoryItemSTFromIndex(uint nIndex)
+{
+    //获取对应AnnotationsOff字段值
+    DWORD dwOff = getClassAnnotationsOffValueFromIndex(nIndex);
+    //这个字段值即为结构在文件的偏移，加上文件起始地址即为这个结构的指针
+    PSTAnnotationsDirectoryItem pAnnotationsDirectoryItem = 
+        (PSTAnnotationsDirectoryItem)(dwOff + getFileBeginAddr());
+    return pAnnotationsDirectoryItem;
+}
+//获取相应Class结构中的class_annotations_off_结构中class_annotations_off_字段值
+uint32_t CMyDexObj::getClassAnnotationsClassAnnotationsOffValueFromIndex(uint nIndex)
+{
+    PSTAnnotationsDirectoryItem pAnnotationsDirectoryItem = 
+        getClassAnnotationsDirectoryItemSTFromIndex(nIndex);
+    return pAnnotationsDirectoryItem->class_annotations_off_;
+}
+//获取相应Class结构中的class_annotations_off_结构中fields_size_字段值
+uint32_t CMyDexObj::getClassAnnotationsFieldsSizeValueFromIndex(uint nIndex)
+{
+    PSTAnnotationsDirectoryItem pAnnotationsDirectoryItem = 
+        getClassAnnotationsDirectoryItemSTFromIndex(nIndex);
+    return pAnnotationsDirectoryItem->fields_size_;
+}
+//获取相应Class结构中的class_annotations_off_结构中methods_size_字段值
+uint32_t CMyDexObj::getClassAnnotationsMethodsSizeValueFromIndex(uint nIndex)
+{
+    PSTAnnotationsDirectoryItem pAnnotationsDirectoryItem = 
+        getClassAnnotationsDirectoryItemSTFromIndex(nIndex);
+    return pAnnotationsDirectoryItem->methods_size_;
+}
+//获取相应Class结构中的class_annotations_off_结构中parameters_size_字段值
+uint32_t CMyDexObj::getClassAnnotationsParametersSizeValueFromIndex(uint nIndex)
+{
+    PSTAnnotationsDirectoryItem pAnnotationsDirectoryItem = 
+        getClassAnnotationsDirectoryItemSTFromIndex(nIndex);
+    return pAnnotationsDirectoryItem->parameters_size_;
+}    
+//根据相应Class结构中的interfaces_off_判断是否需要输出相关信息
+bool CMyDexObj::isClassNeedShowInterfacesString(uint nIndex)
+{
+    PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    return pCD->interfaces_off_ != 0;
+}
+//获取相应Class结构中的class_annotations_off_结构数据,返回值需要手动释放
+const char* CMyDexObj::getClassInterfacesStringFromIndex(uint nIndex)
+{
+    char *result = new char[MAXBYTE * 4];
+    result[0] = '\0';
+    char temp[MAXBYTE];
+    //获取list_结构数量
+    DWORD dwSize = getClassInterfaceListSizeFromIndex(nIndex);
+    //获取list_结构起始地址
+    PSTTypeList pTL = getClassInterfaceListSTFromIndex(nIndex);
+    //list_地址强转为TypeItem，取其内容即为基于type_ids的下标
+    PSTTypeItem pTI = (PSTTypeItem)&pTL->list_;
+    sprintf(result, "interfaces Size:%d", dwSize);
+    for (DWORD i = 0; i < dwSize; i++)
+    {
+        sprintf(temp, " (%X)%s", 
+            pTI->type_idx_,
+            getTypeIdStringFromId(pTI->type_idx_));
+        strcat(result, temp);
+    }
+    return result;
+}
+//获取指定Class下标的interfaces_off_结构下的list_结构指针
+PSTTypeList CMyDexObj::getClassInterfaceListSTFromIndex(uint nIndex)  
+{
+    //获取ClassDef->interfaces_off_字段值
+    DWORD dwOff = getClassInterfaceOffValueFromIndex(nIndex);
+    //+文件起始地址即为结构地址
+    PSTTypeList pTL = (PSTTypeList)
+        (dwOff + getFileBeginAddr());
+    return pTL;
+}
+//获取指定Class下标的interfaces_off_结构下的list_结构数量
+uint32_t CMyDexObj::getClassInterfaceListSizeFromIndex(uint nIndex)
+{
+    PSTTypeList pTL = getClassInterfaceListSTFromIndex(nIndex);
+    return pTL->size_;
 }
