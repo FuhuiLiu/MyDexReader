@@ -115,28 +115,28 @@ typedef struct FieldId {
     uint16_t class_idx_;  // index into type_ids_ array for defining class
     uint16_t type_idx_;  // index into type_ids_ array for field type
     uint32_t name_idx_;  // index into string_ids_ array for field name
-} STFieldIdItem;
+} STFieldIdItem, *PSTFieldIdItem;
 
 // Raw method_id_item. 方法类型
 typedef struct MethodId {
     uint16_t class_idx_;  // index into type_ids_ array for defining class
     uint16_t proto_idx_;  // index into proto_ids_ array for method prototype
     uint32_t name_idx_;  // index into string_ids_ array for method name
-} STMethodIdItem;
+} STMethodIdItem, *PSTMethodIdItem;
 
 // Raw class_def_item. 类信息
 typedef struct ClassDef {
-    uint16_t class_idx_;  // index into type_ids_ array for this class
-    uint16_t pad1_;  // padding = 0
-    uint32_t access_flags_;
-    uint16_t superclass_idx_;  // index into type_ids_ array for superclass
-    uint16_t pad2_;  // padding = 0
-    uint32_t interfaces_off_;  // file offset to TypeList
-    uint32_t source_file_idx_;  // index into string_ids_ for source file name
+    uint16_t class_idx_;  // index into type_ids_ array for this class 类名在type_ids_的下标
+    uint16_t pad1_;  // padding = 0 填充补齐
+    uint32_t access_flags_; //访问标志
+    uint16_t superclass_idx_;  // index into type_ids_ array for superclass 父类名在type_ids_的下标
+    uint16_t pad2_;  // padding = 0 补齐
+    uint32_t interfaces_off_;  // file offset to TypeList 接口TypeList数组文件偏移
+    uint32_t source_file_idx_;  // index into string_ids_ for source file name 源文件名
     uint32_t annotations_off_;  // file offset to annotations_directory_item
-    uint32_t class_data_off_;  // file offset to class_data_item
-    uint32_t static_values_off_;  // file offset to EncodedArray
-} STClassDefItem;
+    uint32_t class_data_off_;  // file offset to class_data_item class_data在文件的偏移
+    uint32_t static_values_off_;  // file offset to EncodedArray 静态数据偏移
+} STClassDefItem, *PSTClassDefItem;
 
 #define kAccPublic 0x0001   // class, field, method, ic
 #define kAccPrivate 0x0002   // field, method, ic

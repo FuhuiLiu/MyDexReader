@@ -63,30 +63,59 @@ public:
     const char* getProtoIdStringFromId(uint nIndex);   //拿proto_id_list指定下标的函数原型信息
     STTypeList *getTypeList(uint nIndex);              //获取指定下标方法的TypeList结构地址
     DWORD getParametersOffFromIndex(uint nIndex);      //获取指定下标方法的参数列表字段值
-    const char* getShortyIdxStringFromIndex(uint nIdex); //拿指定下标方法的极简返回值跟参数字符串
-    const char* getReturnTypeIdxStringFromIndex(uint nIndex); //拿指定下标方法的返回类型字符串
-    const char* getParametersStringFromIndex(uint nIndex); //拿指定下标方法的参数列表字符串,返回值需要手工释放    
+    const char* getShortyIdxStringFromIndex(uint nIdex); //拿proto_id_item数组指定下标方法的极简返回值跟参数字符串
+    const char* getReturnTypeIdxStringFromIndex(uint nIndex); //拿proto_id_item指定下标方法的返回类型字符串
+    const char* getParametersStringFromIndex(uint nIndex); //拿proto_id_item指定下标方法的参数列表字符串,返回值需要手工释放    
     DWORD getShortyIdxValueFromIndex(uint nIdex); //拿指定下标方法的ShortyIdx字段值
     DWORD getReturnTypeIdxValueFromIndex(uint nIndex); //拿指定下标方法的ReturnTypeIdx字段值 
     DWORD getParametersValueFromIndex(uint nIndex); //拿指定下标方法的Parameter字段值
 
-
     bool initFieldIdItemST();        //初始化field_id_item必要结构
     bool ColletionFieldIdItem();     //收集field_id_item表
     STFieldIdItem* getFieldIdSTFromId(uint nIndex);   //拿field_id_list指定下标的结构首地址
+    uint16_t getClassIdxValueFromId(uint nIndex);   //从MethodId结构中拿class_idx_字段值
+    uint16_t getProtoIdxValueFromId(uint nIndex);   //从MethodId结构中拿proto_idx_字段值
+    uint32_t getNameIdxValueFromId(uint nIndex);   //从MethodId结构中拿name_idx_字段值
     DWORD getFieldIdSizeFromSave();    //获取FieldIdSize个数
+	DWORD getFieldClassIdxValueFromIndex(uint nIndex); //拿field_id_item数组指定下标的class_idx_字段值
+	DWORD getFieldTypeIdxValueFromIndex(uint nIndex); //拿field_id_item数组指定下标的proto_idx_字段值
+	DWORD getFieldNameIdxValueFromIndex(uint nIndex); //拿field_id_item数组指定下标的name_idx_字段值
+	const char* getFieldTypeIdxStringFromId(uint nIndex); //拿field_id_item数组指定下标的type_idx_表示的字符串
+	const char* getFieldClassIdxStringFromId(uint nIndex); //拿field_id_item数组指定下标的class_idx_表示的字符串
+	const char* getFieldNameIdxStringFromId(uint nIndex); //拿field_id_item数组指定下标的name_idx_表示的字符串
 
     bool initMethodIdItemST();        //初始化method_id_item必要结构
     bool ColletionMethodIdItem();     //收集method_id_item表
     STMethodIdItem* getMethodIdSTFromId(uint nIndex);   //拿method_id_list指定下标的结构首地址
     DWORD getMethodIdSizeFromSave();    //获取MethodIdSize个数
     void showMethodStringAt(uint nIndex);               //显示方法字符串
+	const char* getMethodClassIdxStringFromIndex(uint nIndex); //拿method_id_item数组指定下标方法的类字符串
+	const char* getMethodProtoIdxStringFromIndex(uint nIndex); //拿method_id_item数组指定下标方法的方法原型字符串
+	const char* getMethodNameIdxStringFromIndex(uint nIndex); //拿method_id_item数组指定下标方法的方法名字符串
+	uint16_t getMethodClassIdxValueFromIndex(uint nIndex); //拿method_id_item数组指定下标的class_idx_字段值
+	uint16_t getMethodProtoIdxValueFromIndex(uint nIndex); //拿method_id_item数组指定下标的proto_idx_字段值
+	uint32_t getMethodNameIdxValueFromIndex(uint nIndex); //拿method_id_item数组指定下标的name_idx_字段值
 
     bool initClassDefItemST();        //初始化classdef_item必要结构
     bool ColletionClassDefItem();     //收集ClassDef_item表
     STClassDefItem* getClassDefSTFromId(uint nIndex);   //拿ClassDef_list指定下标的结构首地址
     DWORD getClassDefSizeFromSave();    //获取ClassDefSize个数
-    //TypeList* getInterfaceOff();        //获取class_def_item结构中的interfaces_off
+    uint16_t getClassClassIdxValueFromIndex(uint nIndex);        //获取class_def_item下标结构中的class_idx_字段值
+    uint16_t getClassPad1ValueFromIndex(uint nIndex);				//获取class_def_item下标结构中的pad1_字段值	
+    uint32_t getClassAccessFlagsValueFromIndex(uint nIndex);        //获取class_def_item下标结构中的access_flags_字段值
+    uint16_t getClassSuperclassIdxValueFromIndex(uint nIndex);        //获取class_def_item下标结构中的superclass_idx_字段值
+    uint16_t getClassPad2ValueFromIndex(uint nIndex);				//获取class_def_item下标结构中的pad2_字段值
+    uint32_t getClassInterfaceOffValueFromIndex(uint nIndex);        //获取class_def_item下标结构中的interfaces_off字段值
+    uint32_t getClassSourceFileIdxValueFromIndex(uint nIndex);        //获取class_def_item下标结构中的source_file_idx_字段值
+    uint32_t getClassAnnotationsOffValueFromIndex(uint nIndex);        //获取class_def_item下标结构中的annotations_off_字段值
+    uint32_t getClassClassDataOffValueFromIndex(uint nIndex);        //获取class_def_item下标结构中的class_data_off_字段值
+    uint32_t getClassStaticValuesOffValueFromIndex(uint nIndex);        //获取class_def_item下标结构中的static_values_off_字段值
+
+	const char* getClassClassIdxStringFromIndex(uint nIndex);			//获取指定下标的ClassDef结构中的class_idx_的字符串
+	const char* getClassAccessFlagsStringFromIndex(uint nIndex);		//获取指定下标的ClassDef结构中的access_flags_的字符串,返回值需要手动做数组释放
+	const char* getClassSuperClassIdxStringFromIndex(uint nIndex);		//获取指定下标的ClassDef结构中的superclass_idx_的字符串
+	const char* getClassSourceFileIdxStringFromIndex(uint nIndex);		//获取指定下标的ClassDef结构中的source_file_idx_的字符串
+
 protected:
 private:
     void *m_pNew;

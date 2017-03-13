@@ -15,7 +15,10 @@ int main(int argc, char* argv[])
     {
         //pST->showAllString();
         //pST->showAllType();
-        pST->showAllProto();
+        //pST->showAllProto();
+		//pST->showAllFields();
+		//pST->showAllMethods();
+		pST->showAllClasses();
     }
 
 	return 0;

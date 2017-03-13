@@ -18,6 +18,10 @@ public:
     void showAllString();   //显示所有字符串
     void showAllType();   //显示type字符串
     void showAllProto();  //显示所有proto信息
+	void showAllFields();	//显示所有field信息
+	void showAllMethods();	//显示所有method信息
+	void showAllClasses();	//显示所有class信息
+
 protected:
 private:
     CMyFileObj  *m_FileObj;

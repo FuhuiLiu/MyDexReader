@@ -140,14 +140,11 @@ void MyDexShowUtils::showAllProto()  //显示所有proto信息
     MsgStart("AllProto");
     DWORD dwProtoItemSize = m_pDexObj->getProtoIdsSize();
     for (DWORD i = 0; i < dwProtoItemSize; i++)
-    {        
-        STProtoIdItem *pST = NULL;
-        //获取该下标类型的地址
-        pST = m_pDexObj->getProtoIdSTFromId(i);
-        ASSERT(pST != NULL);
+    {
+		const char* pshorty_idx = m_pDexObj->getShortyIdxStringFromIndex(i);
+		const char* preturn_type_idx = m_pDexObj->getReturnTypeIdxStringFromIndex(i);
         printf("[%d]: shorty_idx: %s return_type_idx: %s ",
-            i, m_pDexObj->getStringIdStringFromId(pST->shorty_idx_), 
-            m_pDexObj->getTypeIdStringFromId(pST->return_type_idx_));//
+            i, pshorty_idx, preturn_type_idx);//
         const char* pstr = m_pDexObj->getParametersStringFromIndex(i);
         printf("%s\r\n", pstr);
         delete[] (char*)pstr;
@@ -156,4 +153,89 @@ void MyDexShowUtils::showAllProto()  //显示所有proto信息
         delete[] (char*)pstr;
     }
     MsgEnd("AllProto");
+}
+
+void MyDexShowUtils::showAllFields()  //显示所有fields信息
+{
+    MsgStart("AllFields");
+	for (DWORD i = 0; i < m_pDexObj->getFieldIdSizeFromSave(); i++)
+	{
+		const char* pClass = m_pDexObj->getFieldClassIdxStringFromId(i);
+		const char* pType = m_pDexObj->getFieldTypeIdxStringFromId(i);
+		const char* pName = m_pDexObj->getFieldNameIdxStringFromId(i);
+		printf("[%d]: class_idx: %s type_idx: %s name_idx: %s\r\n",
+			i, 
+			pClass, 
+			pType, 
+			pName
+			);
+		}
+    MsgEnd("AllFields");
+}
+
+void MyDexShowUtils::showAllMethods() 
+{
+    MsgStart("AllMethods");
+	for (DWORD i = 0; i < m_pDexObj->getMethodIdSizeFromSave(); i++)
+	{
+//         printf("[%d]: class_idx: %X proto_idx_: %X name_idx: %X\r\n",
+//             i, m_pDexObj->getMethodClassIdxValueFromIndex(i), 
+// 			m_pDexObj->getMethodProtoIdxValueFromIndex(i), 
+// 			m_pDexObj->getMethodNameIdxValueFromIndex(i));
+
+		const char* pClass = m_pDexObj->getMethodClassIdxStringFromIndex(i);
+		const char* pProto = m_pDexObj->getMethodProtoIdxStringFromIndex(i);
+		const char* pName = m_pDexObj->getMethodNameIdxStringFromIndex(i);
+		printf("[%d]: class_idx: %s type_idx: %s name_idx: %s\r\n",
+			i, 
+			pClass, 
+			pProto, 
+			pName
+			);
+	}
+    MsgEnd("AllMethods");
+}
+
+void MyDexShowUtils::showAllClasses()	//显示所有class信息
+{
+    MsgEnd("AllClasses");
+	for(DWORD i = 0; i< m_pDexObj->getClassDefSizeFromSave(); i++)
+	{
+#ifdef DEBUGLOG
+        //输出相关结构数据
+        printf("[%d]: class_idx:%X pad1:%X access_flags_:%X superclass_idx_:%X "
+			"pad2_:%X "
+			"interfaces_off_:%X source_file_idx_:%X annotations_off_:%X "
+			"class_data_off_:%X static_values_off_:%X\r\n",
+            i, 
+			m_pDexObj->getClassClassIdxValueFromIndex(i), 
+			m_pDexObj->getClassPad1ValueFromIndex(i), 
+			m_pDexObj->getClassAccessFlagsValueFromIndex(i), 
+			m_pDexObj->getClassSuperclassIdxValueFromIndex(i),
+            m_pDexObj->getClassPad2ValueFromIndex(i), 
+			m_pDexObj->getClassInterfaceOffValueFromIndex(i), 
+			m_pDexObj->getClassSourceFileIdxValueFromIndex(i),
+            m_pDexObj->getClassAnnotationsOffValueFromIndex(i), 
+			m_pDexObj->getClassClassDataOffValueFromIndex(i),
+            m_pDexObj->getClassStaticValuesOffValueFromIndex(i));
+#endif 
+		const char *pFlags = m_pDexObj->getClassAccessFlagsStringFromIndex(i);
+        printf("[%d]: class_idx:%s pad1:%X access_flags_:%s superclass_idx_:%s "
+			"pad2_:%X "
+			"interfaces_off_:%X source_file_idx_:%s annotations_off_:%X "
+			"class_data_off_:%X static_values_off_:%X\r\n",
+            i, 
+			m_pDexObj->getClassClassIdxStringFromIndex(i), 
+			m_pDexObj->getClassPad1ValueFromIndex(i), 
+			pFlags, 
+			m_pDexObj->getClassSuperClassIdxStringFromIndex(i),
+            m_pDexObj->getClassPad2ValueFromIndex(i), 
+			m_pDexObj->getClassInterfaceOffValueFromIndex(i), 
+			m_pDexObj->getClassSourceFileIdxStringFromIndex(i),
+            m_pDexObj->getClassAnnotationsOffValueFromIndex(i), 
+			m_pDexObj->getClassClassDataOffValueFromIndex(i),
+            m_pDexObj->getClassStaticValuesOffValueFromIndex(i));
+		delete[] (char *)pFlags;
+	}
+    MsgEnd("AllClasses");
 }

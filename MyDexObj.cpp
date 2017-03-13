@@ -3,6 +3,38 @@
 
 #define LEB128MAXBYTESIZE 5
 
+uint32_t g_AccessFlags[] = {
+    kAccPublic,
+		kAccPrivate,
+		kAccProtected,
+		kAccStatic,
+		kAccFinal,
+		kAccSynchronized,
+		kAccSuper,
+		kAccVolatile,
+		kAccBridge,
+		kAccTransient,
+		kAccVarargs,
+		kAccNative,
+		kAccInterface,
+		kAccAbstract,
+		kAccStrict,
+		kAccSynthetic,
+		kAccAnnotation,
+		kAccEnum,
+		kAccMiranda,
+		//kAccJavaFlagsMask,
+		kAccConstructor,
+		kAccDeclaredSynchronized,
+		kAccClassIsProxy,
+		kAccPreverified,
+		kAccClassIsFinalizable,
+		kAccClassIsReference,
+		kAccClassIsWeakReference,
+		kAccClassIsFinalizerReference,
+		kAccClassIsPhantomReference,
+};
+
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：返回LEB128占用大小
  * 函数参数: LEB128指针
@@ -602,15 +634,8 @@ bool CMyDexObj::ColletionProtoIdItem()
 ///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getShortyIdxStringFromIndex(uint nIndex)
 {
-    //取出proto结构下标数据
-    STProtoIdItem *pST = NULL;
-    pST = getProtoIdSTFromId(nIndex);
-    if (pST != NULL)
-    {
-        //这个ShortyIdx字段实际是指向StringId字符串表的下标，调用返回即可
-        return getStringIdStringFromId(getShortyIdxValueFromIndex(nIndex));
-    }
-    return "";
+    //这个ShortyIdx字段实际是指向StringId字符串表的下标，调用返回即可
+    return getStringIdStringFromId(getShortyIdxValueFromIndex(nIndex));
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：拿指定下标方法的返回类型字符串
@@ -620,15 +645,8 @@ const char* CMyDexObj::getShortyIdxStringFromIndex(uint nIndex)
 ///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getReturnTypeIdxStringFromIndex(uint nIndex)
 {
-    //取出proto结构下标数据
-    STProtoIdItem *pST = NULL;
-    pST = getProtoIdSTFromId(nIndex);
-    if (pST != NULL)
-    {
-        //这个return_type_idx_字段实际是指向TypeId字符串表的下标，调用返回即可
-        return getStringIdStringFromId(pST->return_type_idx_);
-    }
-    return "";
+    //这个return_type_idx_字段实际是指向TypeId字符串表的下标，调用返回即可
+    return getTypeIdStringFromId(getReturnTypeIdxValueFromIndex(nIndex));
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：拿指定下标方法的参数列表字符串
@@ -649,6 +667,7 @@ const char* CMyDexObj::getParametersStringFromIndex(uint nIndex)
         PSTTypeList pTL = (STTypeList*)(dwOff + getFileBeginAddr());
         sprintf(temp, "parameters_off[%d]: ", pTL->size_);
         strcpy(tempret, temp);
+		//循环加入所有参数
         for (uint j = 0; j < pTL->size_; j++)
         {
             sprintf(temp, "%s ", getTypeIdStringFromId(pTL->list_[j].type_idx_));
@@ -730,7 +749,7 @@ STTypeList *CMyDexObj::getTypeList(uint nIndex)
     return NULL;
 }
 ///////////////////////////////////////////////////////////////////////////
-/* 函数功能：拿proto_id_list指定下标的函数原型信息,返回值需要手动释放
+/* 函数功能：拿proto_id_list数组指定下标的函数原型信息,返回值需要手动释放
  * 函数参数: nIndex要获取的下标
  * 函数返回值：该下标的结构体指针
  */
@@ -805,9 +824,9 @@ bool CMyDexObj::ColletionFieldIdItem()
 #endif 
         printf("[%d]: class_idx: %s type_idx: %s name_idx: %s\r\n",
             i, 
-            getTypeIdStringFromId(pST->class_idx_), 
-            getTypeIdStringFromId(pST->type_idx_), 
-            getStringIdStringFromId(pST->name_idx_));
+            getTypeIdStringFromId(getClassIdxValueFromId(i)), 
+            getTypeIdStringFromId(getProtoIdxValueFromId(i)), 
+            getStringIdStringFromId(getNameIdxValueFromId(i)));
     }
     return true;
 }
@@ -824,6 +843,39 @@ STFieldIdItem* CMyDexObj::getFieldIdSTFromId(uint nIndex)
     return &m_pFieldIdItem[nIndex];
 }
 ///////////////////////////////////////////////////////////////////////////
+/* 函数功能：从MethodId结构中拿class_idx_字段值
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+uint16_t CMyDexObj::getClassIdxValueFromId(uint nIndex)
+{
+	PSTMethodIdItem pST = getMethodIdSTFromId(nIndex);
+	return pST->class_idx_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：从MethodId结构中拿proto_idx_字段值
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+uint16_t CMyDexObj::getProtoIdxValueFromId(uint nIndex)
+{
+	PSTMethodIdItem pST = getMethodIdSTFromId(nIndex);
+	return pST->proto_idx_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：从MethodId结构中拿name_idx_字段值
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+uint32_t CMyDexObj::getNameIdxValueFromId(uint nIndex)
+{
+	PSTMethodIdItem pST = getMethodIdSTFromId(nIndex);
+	return pST->name_idx_;
+}
+///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取FieldIdSize个数
  * 函数参数: 
  * 函数返回值：
@@ -833,7 +885,84 @@ DWORD CMyDexObj::getFieldIdSizeFromSave()
 {
     return m_nFieldIdItemSize;
 }
-bool CMyDexObj::initMethodIdItemST()        //初始化method_id_item必要结构
+
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：拿field_id_item数组指定下标的class_idx_字段值
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+DWORD CMyDexObj::getFieldClassIdxValueFromIndex(uint nIndex)
+{
+	STFieldIdItem *pST = getFieldIdSTFromId(nIndex);
+	return pST->class_idx_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：拿field_id_item数组指定下标的type_idx_字段值
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+DWORD CMyDexObj::getFieldTypeIdxValueFromIndex(uint nIndex)
+{
+	STFieldIdItem *pST = getFieldIdSTFromId(nIndex);
+	return pST->type_idx_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：拿field_id_item数组指定下标的name_idx_字段值
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+DWORD CMyDexObj::getFieldNameIdxValueFromIndex(uint nIndex)
+{
+	STFieldIdItem *pST = getFieldIdSTFromId(nIndex);
+	return pST->name_idx_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：拿field_id_item数组指定下标的type_idx_表示的字符串
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+const char* CMyDexObj::getFieldTypeIdxStringFromId(uint nIndex)
+{
+	//获取type_idx_字段值,这个字段即为type_ids_字符串数组下标
+	//m_pDexObj->getTypeIdStringFromId(m_pDexObj->getProto_Idx_FromId(i)), 
+	return getTypeIdStringFromId(getFieldTypeIdxValueFromIndex(nIndex));
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：拿field_id_item数组指定下标的class_idx_表示的字符串
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+const char* CMyDexObj::getFieldClassIdxStringFromId(uint nIndex)
+{
+	//获取class_idx_字段值，这个字段即为type_ids_字符串数组下标
+	//m_pDexObj->getTypeIdStringFromId(m_pDexObj->getClass_Idx_FromId(i)), 
+	return getTypeIdStringFromId(getFieldClassIdxValueFromIndex(nIndex));
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：拿field_id_item数组指定下标的name_idx_表示的字符串
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+const char* CMyDexObj::getFieldNameIdxStringFromId(uint nIndex)
+{
+	//获取name_idx_字段值,这个字段即为type_ids_字符串数组下标
+	//m_pDexObj->getStringIdStringFromId(m_pDexObj->getName_Idx_FromId(i))
+	return getStringIdStringFromId(getFieldNameIdxValueFromIndex(nIndex));
+}
+
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：初始化method_id_item必要结构
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+bool CMyDexObj::initMethodIdItemST()
 {
     //遍历MapItem是否存在对应类型结构数据
     STMapItem *pST = (STMapItem *)getMapItemWithType(kDexTypeMethodIdItem);
@@ -906,6 +1035,70 @@ void CMyDexObj::showMethodStringAt(uint nIndex)
     printf(" %s.%s\r\n",
         getTypeIdStringFromId(pSTMI->class_idx_), 
         getStringIdStringFromId(pSTMI->name_idx_));
+}
+
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：拿method_id_item数组指定下标方法的类字符串
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+const char* CMyDexObj::getMethodClassIdxStringFromIndex(uint nIndex)
+{
+	return getTypeIdStringFromId(getMethodClassIdxValueFromIndex(nIndex));
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：拿method_id_item数组指定下标方法的方法原型字符串
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+const char* CMyDexObj::getMethodProtoIdxStringFromIndex(uint nIndex)
+{
+	return getProtoIdStringFromId(getMethodProtoIdxValueFromIndex(nIndex));
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：拿method_id_item数组指定下标方法的方法名字符串
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+const char* CMyDexObj::getMethodNameIdxStringFromIndex(uint nIndex)
+{
+	return getStringIdStringFromId(getMethodNameIdxValueFromIndex(nIndex));
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：拿method_id_item数组指定下标的class_idx_字段值
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+uint16_t CMyDexObj::getMethodClassIdxValueFromIndex(uint nIndex)
+{
+    STMethodIdItem *pST = getMethodIdSTFromId(nIndex);
+	return pST->class_idx_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：拿method_id_item数组指定下标的proto_idx_字段值
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+uint16_t CMyDexObj::getMethodProtoIdxValueFromIndex(uint nIndex)
+{
+    STMethodIdItem *pST = getMethodIdSTFromId(nIndex);
+	return pST->proto_idx_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：拿method_id_item数组指定下标的name_idx_字段值
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+uint32_t CMyDexObj::getMethodNameIdxValueFromIndex(uint nIndex)
+{
+    STMethodIdItem *pST = getMethodIdSTFromId(nIndex);
+	return pST->name_idx_;
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：初始化classdef_item必要结构
@@ -1535,4 +1728,286 @@ DWORD CMyDexObj::getClassDefSizeFromSave()
 {
     ASSERT(m_nClassDefItemSize != 0);
     return m_nClassDefItemSize;
+}
+
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取class_def_item下标结构中的class_idx_字段值	
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+uint16_t CMyDexObj::getClassClassIdxValueFromIndex(uint nIndex)
+{
+	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+	return pCD->class_idx_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取class_def_item下标结构中的pad1_字段值	
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+uint16_t CMyDexObj::getClassPad1ValueFromIndex(uint nIndex)
+{
+	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+	return pCD->pad1_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取class_def_item下标结构中的access_flags_字段值
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+uint32_t CMyDexObj::getClassAccessFlagsValueFromIndex(uint nIndex)
+{
+	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+	return pCD->access_flags_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取class_def_item下标结构中的superclass_idx_字段值
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+uint16_t CMyDexObj::getClassSuperclassIdxValueFromIndex(uint nIndex)
+{
+	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+	return pCD->superclass_idx_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取class_def_item下标结构中的pad2_字段值	
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+uint16_t CMyDexObj::getClassPad2ValueFromIndex(uint nIndex)
+{
+	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+	return pCD->pad2_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取class_def_item下标结构中的interfaces_off字段值
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+uint32_t CMyDexObj::getClassInterfaceOffValueFromIndex(uint nIndex)
+{
+	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+	return pCD->interfaces_off_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取class_def_item下标结构中的source_file_idx_字段值
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+uint32_t CMyDexObj::getClassSourceFileIdxValueFromIndex(uint nIndex)
+{
+	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+	return pCD->source_file_idx_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取class_def_item下标结构中的annotations_off_字段值
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+uint32_t CMyDexObj::getClassAnnotationsOffValueFromIndex(uint nIndex)
+{
+	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+	return pCD->annotations_off_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取class_def_item下标结构中的class_data_off_字段值
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+uint32_t CMyDexObj::getClassClassDataOffValueFromIndex(uint nIndex)
+{
+	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+	return pCD->class_data_off_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取class_def_item下标结构中的static_values_off_字段值
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+uint32_t CMyDexObj::getClassStaticValuesOffValueFromIndex(uint nIndex)
+{
+	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+	return pCD->static_values_off_;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定下标的ClassDef结构中的class_idx_的字符串
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+const char* CMyDexObj::getClassClassIdxStringFromIndex(uint nIndex)
+{
+	return getTypeIdStringFromId(getClassClassIdxValueFromIndex(nIndex));
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定下标的ClassDef结构中的access_flags_表示的字符串,返回值需要手动做数组释放
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+const char* CMyDexObj::getClassAccessFlagsStringFromIndex(uint nIndex)
+{
+	DWORD dwFlags = getClassAccessFlagsValueFromIndex(nIndex);
+	char *result = new char[MAXBYTE * 4];
+	result[0] = '\0';
+	char temp[MAXBYTE];
+
+	//若flags为0则返回0
+	if(dwFlags == 0)
+	{
+		result[0] = 0x30;
+		result[1] = '\0';
+		return result;
+	}
+
+    for (int j = 0; j < sizeof(g_AccessFlags) / sizeof(g_AccessFlags[0]); j++)
+    {
+        switch(dwFlags & g_AccessFlags[j])
+        {
+        case kAccPublic:
+            sprintf(temp, " %s", "ACC_PUBLIC");
+			strcat(result, temp);
+            break;
+        case kAccPrivate:
+            sprintf(temp, " %s", "ACC_PRIVATE");
+			strcat(result, temp);
+            break;
+        case kAccProtected:
+            sprintf(temp, " %s", "ACC_PROTECTED");
+			strcat(result, temp);
+            break;
+        case kAccStatic:
+            sprintf(temp, " %s", "ACC_STATIC");
+			strcat(result, temp);
+            break;
+        case kAccFinal:
+            sprintf(temp, " %s", "ACC_FINAL");
+			strcat(result, temp);
+            break;
+        case kAccSynchronized:
+            sprintf(temp, " %s", "ACC_SYNCHRONIZED");
+			strcat(result, temp);
+            break;
+			//             case kAccSuper: //有重复定义
+			//                 printf(" %s", "ACC_SUPER");
+			//                 break;
+        case kAccVolatile:
+            sprintf(temp, " %s", "ACC_VOLATILE");
+			strcat(result, temp);
+            break;
+			//             case kAccBridge: //有重复定义
+			//                 printf(" %s", "ACC_BRIDGE");
+			//                 break;
+        case kAccTransient:
+            sprintf(temp, " %s", "ACC_TRANSIENT");
+			strcat(result, temp);
+            break;
+//             case kAccVarargs: //有重复定义
+//                 printf(" %s", "ACC_VARARGS");
+//                 break;
+        case kAccNative:
+            sprintf(temp, " %s", "ACC_NATIVE");
+			strcat(result, temp);
+            break;
+        case kAccInterface:
+            sprintf(temp, " %s", "ACC_INTERFACE");
+			strcat(result, temp);
+            break;
+        case kAccAbstract:
+            sprintf(temp, " %s", "ACC_ABSTRACT");
+			strcat(result, temp);
+            break;
+        case kAccStrict:
+            sprintf(temp, " %s", "ACC_STRICT");
+			strcat(result, temp);
+            break;
+        case kAccSynthetic:
+            sprintf(temp, " %s", "ACC_SYNTHETIC");
+			strcat(result, temp);
+            break;
+        case kAccAnnotation:
+            sprintf(temp, " %s", "ACC_ANNOTATION");
+			strcat(result, temp);
+            break;
+        case kAccEnum:
+            sprintf(temp, " %s", "ACC_ENUM");
+			strcat(result, temp);
+            break;
+        case kAccMiranda:
+            sprintf(temp, " %s", "ACC_Miranda");
+			strcat(result, temp);
+            break;
+			//             case kAccJavaFlagsMask:
+			//                 printf(" %s", "ACC_JavaFlagsMask");
+			//                 break;
+        case kAccConstructor:
+            sprintf(temp, " %s", "ACC_Constructor");
+			strcat(result, temp);
+            break;
+        case kAccDeclaredSynchronized:
+            sprintf(temp, " %s", "ACC_DeclaredSynchronized");
+			strcat(result, temp);
+            break;
+        case kAccClassIsProxy:
+            sprintf(temp, " %s", "ACC_ClassIsProxy");
+			strcat(result, temp);
+            break;
+        case kAccPreverified:
+            sprintf(temp, " %s", "ACC_Preverified");
+			strcat(result, temp);
+            break;
+        case kAccClassIsFinalizable:
+            sprintf(temp, " %s", "ACC_ClassIsFinalizable");
+			strcat(result, temp);
+            break;
+        case kAccClassIsReference:
+            sprintf(temp, " %s", "ACC_ClassIsReference");
+			strcat(result, temp);
+            break;
+        case kAccClassIsWeakReference:
+            sprintf(temp, " %s", "ACC_ClassIsWeakReference");
+			strcat(result, temp);
+            break;
+        case kAccClassIsFinalizerReference:
+            sprintf(temp, " %s", "ACC_ClassIsFinalizerReference");
+			strcat(result, temp);
+            break;
+        case kAccClassIsPhantomReference:
+            sprintf(temp, " %s", "ACC_ClassIsPhantomReference");
+			strcat(result, temp);
+            break;
+        }
+    }
+	return result;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定下标的ClassDef结构中的superclass_idx_的字符串
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+const char* CMyDexObj::getClassSuperClassIdxStringFromIndex(uint nIndex)
+{
+	return getTypeIdStringFromId(getClassSuperclassIdxValueFromIndex(nIndex));
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定下标的ClassDef结构中的source_file_idx_的字符串
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+const char* CMyDexObj::getClassSourceFileIdxStringFromIndex(uint nIndex)
+{
+	return getStringIdStringFromId(getClassSourceFileIdxValueFromIndex(nIndex));
 }
