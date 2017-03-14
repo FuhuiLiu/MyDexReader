@@ -198,9 +198,33 @@ public:
 	//获取指定class_def_item->class_data_off_->direct_methods_size->access_flags字段值,这是一个LEB128数据
 	DWORD getClassDirectMethodsAccessFlagsValueIndex(BYTE *pByte);
 	//获取指定class_def_item->class_data_off_->direct_methods_size->code_off字段值,这是一个LEB128数据
-	DWORD getClassDirectMethodsCodeOffValueIndex(BYTE *pByte);
+    DWORD getClassDirectMethodsCodeOffValueIndex(BYTE *pByte);
+    //获取指定class_def_item->class_data_off_->virtual_methods_size->code_off字段值,这是一个LEB128数据
+	DWORD getClassDirectMethodsCodeOffValueIndex(uint nIndex, uint nItemIndex);
 	//获取指定class_def_item->class_data_off_->direct_methods_size指向的数据地址,没有则返回空指针！！！
 	BYTE* getClassDirectMethodsAddrFromIndex(uint nIndex);
+    //获取指定class_def_item->class_data_off_->direct_methods_size->data_off_是否需要输出
+    bool isClassDirectMethodsNeedShowDataOffStringFromIndex(uint nIndex);
+    //获取指定class_def_item->class_data_off_->direct_methods_size->data_off_字节码
+    const char* getClassDirectMethodsDataOffStringFromIndex(DWORD dwOff);
+    //获取指定class_def_item->class_data_off_->direct_methods_size->data_off_指向结构首地址
+    PSTCodeItem getClassDirectMethodsDataOffSTFromeIndex(uint nIndex);
+    //获取data_off_结构下的register_size_字段值
+    uint16_t getClassDirectMethodsDataOffRegisterSizeValueFromIndex(DWORD dwOff);
+    //获取data_off_结构下的ins_size_字段值
+    uint16_t getClassDirectMethodsDataOffInsSizeValueFromIndex(DWORD dwOff);
+    //获取data_off_结构下的out_size_字段值
+    uint16_t getClassDirectMethodsDataOffOutsSizeValueFromIndex(DWORD dwOff);
+    //获取data_off_结构下的tries_size_字段值
+    uint16_t getClassDirectMethodsDataOffTriesSizeValueFromIndex(DWORD dwOff);
+    //获取data_off_结构下的debug_info_off_字段值
+    uint32_t getClassDirectMethodsDataOffDebugInfoOffValueFromIndex(DWORD dwOff);
+    //获取data_off_结构下的insns数据大小，实际是WORD的个数
+    uint32_t getClassDirectMethodsDataOffInsnsSizeInCodeUnitsValueFromIndex(DWORD dwOff);
+    //获取data_off_结构下的insns数据起始地址
+    WORD* getClassDirectMethodsDataOffInsnsAddrFromIndex(DWORD dwOff);
+    //获取ClassDirectMethodsDataOffInsns下的机器码，返回值手动释放
+    const char* getClassDirectMethodsDataOffInsnsMachineCode(PSTCodeItem pSTCI);
 	
 	//指定class_def_item->class_data_off_->virtual_methods_size字段值是否为0
 	bool isClassNeedShowVirtualMethodsStringFromIndex(uint nIndex);
@@ -211,9 +235,32 @@ public:
 	//获取指定class_def_item->class_data_off_->virtual_methods_size->access_flags字段值,这是一个LEB128数据
 	DWORD getClassVirtualMethodsAccessFlagsValueIndex(BYTE *pByte);
 	//获取指定class_def_item->class_data_off_->virtual_methods_size->code_off字段值,这是一个LEB128数据
-	DWORD getClassVirtualMethodsCodeOffValueIndex(BYTE *pByte);
+    DWORD getClassVirtualMethodsCodeOffValueIndex(BYTE *pByte);
+    //获取指定class_def_item->class_data_off_->virtual_methods_size->code_off字段值,这是一个LEB128数据
+	DWORD getClassVirtualMethodsCodeOffValueIndex(uint nIndex, uint nItemIndex);
 	//获取指定class_def_item->class_data_off_->virtual_methods_size指向的数据地址,没有则返回空指针！！！
-	BYTE* getClassVirtualMethodsAddrFromIndex(uint nIndex);
+    BYTE* getClassVirtualMethodsAddrFromIndex(uint nIndex);
+    //获取指定class_def_item->class_data_off_->virtual_methods_size->data_off_是否需要输出
+    bool isClassVirturlMethodsNeedShowDataOffStringFromIndex(uint nIndex);
+    //获取指定class_def_item->class_data_off_->virtual_methods_size->data_off_字符串
+    const char* getClassVirtualMethodsDataOffStringFromIndex(DWORD dwOff);
+    //获取指定class_def_item->class_data_off_->virtual_methods_size->data_off_指向结构首地址
+    PSTCodeItem getClassVirtualMethodsDataOffSTFromeIndex(uint nIndex);
+    //获取data_off_结构下的register_size_字段值
+    uint16_t getClassVirtualMethodsDataOffRegisterSizeValueFromIndex(DWORD dwOff);
+    //获取data_off_结构下的ins_size_字段值
+    uint16_t getClassVirtualMethodsDataOffInsSizeValueFromIndex(DWORD dwOff);
+    //获取data_off_结构下的out_size_字段值
+    uint16_t getClassVirtualMethodsDataOffOutsSizeValueFromIndex(DWORD dwOff);
+    //获取data_off_结构下的tries_size_字段值
+    uint16_t getClassVirtualMethodsDataOffTriesSizeValueFromIndex(DWORD dwOff);
+    //获取data_off_结构下的debug_info_off_字段值
+    uint32_t getClassVirtualMethodsDataOffDebugInfoOffValueFromIndex(DWORD dwOff);
+    //获取data_off_结构下的insns数据大小，实际是WORD的个数
+    uint32_t getClassVirtualMethodsDataOffInsnsSizeInCodeUnitsValueFromIndex(DWORD dwOff);
+    //获取data_off_结构下的insns数据起始地址
+    WORD* getClassVirtualMethodsDataOffInsnsAddrFromIndex(DWORD dwOff);
+
 
 	//返回访问标志字符串，返回值需要手动delete []
 	const char* getClassAccessFlagsString(DWORD dwFlags);

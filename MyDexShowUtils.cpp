@@ -293,7 +293,21 @@ void MyDexShowUtils::showAllClasses()	//显示所有class信息
 			{
 				const char* p = m_pDexObj->getClassDirectMethodsStringFromIndex(i, j);
 				printf("\t\t\t%s\r\n", p);
-				delete[] (char *)p;
+                delete[] (char *)p;
+
+                //如果direct_methods_size结构下的code_off_有数据需要输出
+                if (m_pDexObj->isClassDirectMethodsNeedShowDataOffStringFromIndex(i))
+                {
+                    //CodeOff实际指向STCodeItem结构在文件中的偏移
+                    DWORD dwOff = m_pDexObj->getClassDirectMethodsCodeOffValueIndex(i, j);
+                    const char* p = m_pDexObj->getClassDirectMethodsDataOffStringFromIndex(dwOff);
+                    printf("\t\t\t\t%s\r\n", p);
+                    delete[] (char *)p;
+                    
+                    const char* pp = m_pDexObj->getClassDirectMethodsDataOffInsnsMachineCode((PSTCodeItem)(dwOff + m_pDexObj->getFileBeginAddr()));
+                    printf("\t\t\t\t\t%s\r\n", pp);
+                    delete[] (char *)pp;
+                }
 			}
 		}
 		//virtual_methods_size信息是否需要输出
@@ -305,7 +319,16 @@ void MyDexShowUtils::showAllClasses()	//显示所有class信息
 			{
 				const char* p = m_pDexObj->getClassVirtualMethodsStringFromIndex(i, j);
 				printf("\t\t\t%s\r\n", p);
-				delete[] (char *)p;
+                delete[] (char *)p;
+
+                //如果virtual_methods_size结构下的code_off_有数据需要输出
+                if (m_pDexObj->isClassVirturlMethodsNeedShowDataOffStringFromIndex(i))
+                {
+                    DWORD dwOff = m_pDexObj->getClassVirtualMethodsCodeOffValueIndex(i, j);
+                    const char* p = m_pDexObj->getClassVirtualMethodsDataOffStringFromIndex(dwOff);
+                    printf("\t\t\t\t%s\r\n", p);
+                    delete[] (char *)p;
+                }
 			}
 		}
 	}

@@ -206,5 +206,5 @@ typedef struct CodeItem {
     uint32_t debug_info_off_;  // file offset to debug info stream
     uint32_t insns_size_in_code_units_;  // size of the insns array, in 2 byte code units
     uint16_t insns_[1];
-} STCodeItem, *pSTCodeItem;
+} STCodeItem, *PSTCodeItem;
 #endif
