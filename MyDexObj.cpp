@@ -1295,26 +1295,26 @@ bool CMyDexObj::ColletionClassDefItem()
         }
         
         //class_def_item->class_data_off_
-        pSTClassDataItem pClassDataItem = NULL;
+        PSTClassDataItem pClassDataItem = NULL;
         if (pST->class_data_off_ != 0)
         {
-            pClassDataItem = (pSTClassDataItem)
+            pClassDataItem = (PSTClassDataItem)
                 ((DWORD)pST->class_data_off_ + getFileBeginAddr());
             int nCount = 0;
-            pSTClassDataItem pNew = pClassDataItem;
+            PSTClassDataItem pNew = pClassDataItem;
             //各个数量都是leb128数据表示
             int nstatic_fields_size_ = readLeb128((BYTE*)pNew);
             nCount = getLeb128Size((BYTE*)pNew);
-            pNew = (pSTClassDataItem)((DWORD)pNew + nCount);
+            pNew = (PSTClassDataItem)((DWORD)pNew + nCount);
             int ninstance_fields_size_ = readLeb128((BYTE*)pNew);
             nCount = getLeb128Size((BYTE*)pNew);
-            pNew = (pSTClassDataItem)((DWORD)pNew + nCount);
+            pNew = (PSTClassDataItem)((DWORD)pNew + nCount);
             int ndirect_methods_size_ = readLeb128((BYTE*)pNew);
             nCount = getLeb128Size((BYTE*)pNew);
-            pNew = (pSTClassDataItem)((DWORD)pNew + nCount);
+            pNew = (PSTClassDataItem)((DWORD)pNew + nCount);
             int nvirtual_methods_size_ = readLeb128((BYTE*)pNew);
             nCount = getLeb128Size((BYTE*)pNew);
-            pNew = (pSTClassDataItem)((DWORD)pNew + nCount);
+            pNew = (PSTClassDataItem)((DWORD)pNew + nCount);
 
             printf("\t static_fields_size_:%x instance_fields_size_:%d "
                 "direct_methods_size_:%d virtual_methods_size_:%d\r\n",
@@ -1334,12 +1334,12 @@ bool CMyDexObj::ColletionClassDefItem()
                     //指向fieldids字下标
                     int field_idx_diff = readLeb128((BYTE*)pNew);
                     nCount = getLeb128Size((BYTE*)pNew);
-                    pNew = (pSTClassDataItem)((DWORD)pNew + nCount);
+                    pNew = (PSTClassDataItem)((DWORD)pNew + nCount);
                     
                     //访问标志
                     int naccess_flags = readLeb128((BYTE*)pNew);
                     nCount = getLeb128Size((BYTE*)pNew);
-                    pNew = (pSTClassDataItem)((DWORD)pNew + nCount);
+                    pNew = (PSTClassDataItem)((DWORD)pNew + nCount);
                     
 
 //                     printf("\t\t\t[%X => %d]", nmethod_idx_diff, nmethod_idx_diff);
@@ -1361,12 +1361,12 @@ bool CMyDexObj::ColletionClassDefItem()
                     //指向fieldids字下标
                     int field_idx_diff = readLeb128((BYTE*)pNew);
                     nCount = getLeb128Size((BYTE*)pNew);
-                    pNew = (pSTClassDataItem)((DWORD)pNew + nCount);
+                    pNew = (PSTClassDataItem)((DWORD)pNew + nCount);
                     
                     //访问标志
                     int naccess_flags = readLeb128((BYTE*)pNew);
                     nCount = getLeb128Size((BYTE*)pNew);
-                    pNew = (pSTClassDataItem)((DWORD)pNew + nCount);
+                    pNew = (PSTClassDataItem)((DWORD)pNew + nCount);
                     
                     printf("\t\t\t [%d]method_idx_diff:%X access_flags:%X \r\n", 
                         i,
@@ -1384,15 +1384,15 @@ bool CMyDexObj::ColletionClassDefItem()
                     //方法输出
                     nmethod_idx_diff = readLeb128((BYTE*)pNew);
                     nCount = getLeb128Size((BYTE*)pNew);
-                    pNew = (pSTClassDataItem)((DWORD)pNew + nCount);
+                    pNew = (PSTClassDataItem)((DWORD)pNew + nCount);
                     
                     int naccess_flags = readLeb128((BYTE*)pNew);
                     nCount = getLeb128Size((BYTE*)pNew);
-                    pNew = (pSTClassDataItem)((DWORD)pNew + nCount);
+                    pNew = (PSTClassDataItem)((DWORD)pNew + nCount);
                     
                     int ncode_off = readLeb128((BYTE*)pNew);
                     nCount = getLeb128Size((BYTE*)pNew);
-                    pNew = (pSTClassDataItem)((DWORD)pNew + nCount);
+                    pNew = (PSTClassDataItem)((DWORD)pNew + nCount);
                     
 //                     printf("\t\t\t[%X => %d]", nmethod_idx_diff, nmethod_idx_diff);
 //                     showMethodStringAt(nmethod_idx_diff);
@@ -1544,15 +1544,15 @@ bool CMyDexObj::ColletionClassDefItem()
                     //方法输出
                     nmethod_idx_diff = readLeb128((BYTE*)pNew);
                     nCount = getLeb128Size((BYTE*)pNew);
-                    pNew = (pSTClassDataItem)((DWORD)pNew + nCount);
+                    pNew = (PSTClassDataItem)((DWORD)pNew + nCount);
                     
                     int naccess_flags = readLeb128((BYTE*)pNew);
                     nCount = getLeb128Size((BYTE*)pNew);
-                    pNew = (pSTClassDataItem)((DWORD)pNew + nCount);
+                    pNew = (PSTClassDataItem)((DWORD)pNew + nCount);
                     
                     int ncode_off = readLeb128((BYTE*)pNew);
                     nCount = getLeb128Size((BYTE*)pNew);
-                    pNew = (pSTClassDataItem)((DWORD)pNew + nCount);
+                    pNew = (PSTClassDataItem)((DWORD)pNew + nCount);
                     
 //                     printf("\t\t\t[%X => %d]", nmethod_idx_diff, nmethod_idx_diff);
 //                     showMethodStringAt(nmethod_idx_diff);
@@ -1992,6 +1992,146 @@ const char* CMyDexObj::getClassAccessFlagsStringFromIndex(uint nIndex)
 	return result;
 }
 ///////////////////////////////////////////////////////////////////////////
+/* 函数功能：返回访问标志字符串，返回值需要手动delete []
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+const char* CMyDexObj::getClassAccessFlagsString(DWORD dwFlags)
+{
+	char *result = new char[MAXBYTE * 4];
+	result[0] = '\0';
+	char temp[MAXBYTE];
+
+	//若flags为0则返回0
+	if(dwFlags == 0)
+	{
+		result[0] = 0x30;
+		result[1] = '\0';
+		return result;
+	}
+
+    for (int j = 0; j < sizeof(g_AccessFlags) / sizeof(g_AccessFlags[0]); j++)
+    {
+        switch(dwFlags & g_AccessFlags[j])
+        {
+        case kAccPublic:
+            sprintf(temp, " %s", "ACC_PUBLIC");
+			strcat(result, temp);
+            break;
+        case kAccPrivate:
+            sprintf(temp, " %s", "ACC_PRIVATE");
+			strcat(result, temp);
+            break;
+        case kAccProtected:
+            sprintf(temp, " %s", "ACC_PROTECTED");
+			strcat(result, temp);
+            break;
+        case kAccStatic:
+            sprintf(temp, " %s", "ACC_STATIC");
+			strcat(result, temp);
+            break;
+        case kAccFinal:
+            sprintf(temp, " %s", "ACC_FINAL");
+			strcat(result, temp);
+            break;
+        case kAccSynchronized:
+            sprintf(temp, " %s", "ACC_SYNCHRONIZED");
+			strcat(result, temp);
+            break;
+			//             case kAccSuper: //有重复定义
+			//                 printf(" %s", "ACC_SUPER");
+			//                 break;
+        case kAccVolatile:
+            sprintf(temp, " %s", "ACC_VOLATILE");
+			strcat(result, temp);
+            break;
+			//             case kAccBridge: //有重复定义
+			//                 printf(" %s", "ACC_BRIDGE");
+			//                 break;
+        case kAccTransient:
+            sprintf(temp, " %s", "ACC_TRANSIENT");
+			strcat(result, temp);
+            break;
+//             case kAccVarargs: //有重复定义
+//                 printf(" %s", "ACC_VARARGS");
+//                 break;
+        case kAccNative:
+            sprintf(temp, " %s", "ACC_NATIVE");
+			strcat(result, temp);
+            break;
+        case kAccInterface:
+            sprintf(temp, " %s", "ACC_INTERFACE");
+			strcat(result, temp);
+            break;
+        case kAccAbstract:
+            sprintf(temp, " %s", "ACC_ABSTRACT");
+			strcat(result, temp);
+            break;
+        case kAccStrict:
+            sprintf(temp, " %s", "ACC_STRICT");
+			strcat(result, temp);
+            break;
+        case kAccSynthetic:
+            sprintf(temp, " %s", "ACC_SYNTHETIC");
+			strcat(result, temp);
+            break;
+        case kAccAnnotation:
+            sprintf(temp, " %s", "ACC_ANNOTATION");
+			strcat(result, temp);
+            break;
+        case kAccEnum:
+            sprintf(temp, " %s", "ACC_ENUM");
+			strcat(result, temp);
+            break;
+        case kAccMiranda:
+            sprintf(temp, " %s", "ACC_Miranda");
+			strcat(result, temp);
+            break;
+			//             case kAccJavaFlagsMask:
+			//                 printf(" %s", "ACC_JavaFlagsMask");
+			//                 break;
+        case kAccConstructor:
+            sprintf(temp, " %s", "ACC_Constructor");
+			strcat(result, temp);
+            break;
+        case kAccDeclaredSynchronized:
+            sprintf(temp, " %s", "ACC_DeclaredSynchronized");
+			strcat(result, temp);
+            break;
+        case kAccClassIsProxy:
+            sprintf(temp, " %s", "ACC_ClassIsProxy");
+			strcat(result, temp);
+            break;
+        case kAccPreverified:
+            sprintf(temp, " %s", "ACC_Preverified");
+			strcat(result, temp);
+            break;
+        case kAccClassIsFinalizable:
+            sprintf(temp, " %s", "ACC_ClassIsFinalizable");
+			strcat(result, temp);
+            break;
+        case kAccClassIsReference:
+            sprintf(temp, " %s", "ACC_ClassIsReference");
+			strcat(result, temp);
+            break;
+        case kAccClassIsWeakReference:
+            sprintf(temp, " %s", "ACC_ClassIsWeakReference");
+			strcat(result, temp);
+            break;
+        case kAccClassIsFinalizerReference:
+            sprintf(temp, " %s", "ACC_ClassIsFinalizerReference");
+			strcat(result, temp);
+            break;
+        case kAccClassIsPhantomReference:
+            sprintf(temp, " %s", "ACC_ClassIsPhantomReference");
+			strcat(result, temp);
+            break;
+        }
+    }
+	return result;
+}
+///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取指定下标的ClassDef结构中的superclass_idx_的字符串
  * 函数参数: 
  * 函数返回值：
@@ -2120,4 +2260,520 @@ uint32_t CMyDexObj::getClassInterfaceListSizeFromIndex(uint nIndex)
 {
     PSTTypeList pTL = getClassInterfaceListSTFromIndex(nIndex);
     return pTL->size_;
+}
+//根据class_def_item->class_data_off_字段值判断是否需要输出
+bool CMyDexObj::isClassNeedShowClassDataString(uint nIndex)
+{
+	//对应class_data_off_字段值不为0则可以输出
+    return getClassClassDataOffValueFromIndex(nIndex) != 0;
+}
+//获取相应Class结构中的class_data_off_结构数据,返回值需要手动释放
+const char* CMyDexObj::getClassClassDataStringFromIndex(uint nIndex)
+{
+	char * result = new char[MAXBYTE];
+	result[0] = '\0';
+	sprintf(result, 
+			"static_fields_size_:%x instance_fields_size_:%d "
+			"direct_methods_size_:%d virtual_methods_size_:%d",
+			getClassClassDataStaticFieldsSizeValueFromIndex(nIndex),
+			getClassClassDataInstanceFieldsSizeValueFromIndex(nIndex),
+			getClassClassDataDirectMethodsSizeValueFromIndex(nIndex),
+			getClassClassDataVirtualMethodsSizeValueFromIndex(nIndex));
+	return result;
+}
+//获取指定Class结构中的STClassDataItem结构指定
+PSTClassDataItem CMyDexObj::getClassClassDataSTFromIndex(uint nIndex)
+{
+	DWORD dwOff = getClassClassDataOffValueFromIndex(nIndex);
+	if(dwOff == 0)
+		return NULL;
+	PSTClassDataItem pCD = (PSTClassDataItem)(dwOff + getFileBeginAddr());
+	return pCD;
+}
+//获取指定class_def_item->class_data_off_->static_fields_size字段值，这是LEB128类型数据
+uint32_t CMyDexObj::getClassClassDataStaticFieldsSizeValueFromIndex(uint nIndex)
+{
+	//获取对应class_def_item->class_data_off_指向的结构指针，
+	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	//注意这里当off为0时返回为空，需要特殊处理一下
+	if(pCDI == NULL)
+		return 0;
+	BYTE *pByte = (BYTE*)pCDI;
+	//第一个LEB128数据是static_fields_size字段
+	uint32_t nStaticFieldSizeValue = readLeb128(pByte);
+	uint nSize = getLeb128Size(pByte);
+	return nStaticFieldSizeValue;
+}
+//获取指定class_def_item->class_data_off_->instance_fields_size字段值，这是LEB128类型数据
+uint32_t CMyDexObj::getClassClassDataInstanceFieldsSizeValueFromIndex(uint nIndex)
+{
+	//第一个LEB128数据是static_fields_size字段
+	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	//返回为空即没有这个类型的数据
+	if (pCDI == 0)
+	{
+		return 0;
+	}
+	BYTE *pByte = (BYTE*)pCDI;
+	uint32_t nStaticFieldSizeValue = readLeb128(pByte);
+	uint nSize = getLeb128Size(pByte);
+	//第二个LEB128数据是instance_fields_size字段
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	uint32_t nInstanceFieldSizeValue = readLeb128(pByte);
+	nSize = getLeb128Size(pByte);
+	return nInstanceFieldSizeValue;
+}
+//获取指定class_def_item->class_data_off_->direct_methods_size字段值，这是LEB128类型数据
+uint32_t CMyDexObj::getClassClassDataDirectMethodsSizeValueFromIndex(uint nIndex)
+{
+	//第一个LEB128数据是direct_methods_size字段
+	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	if (pCDI == NULL)
+	{
+		return 0;
+	}
+	BYTE *pByte = (BYTE*)pCDI;
+	uint32_t nStaticFieldSizeValue = readLeb128(pByte);
+	uint nSize = getLeb128Size(pByte);
+	//第二个LEB128数据是instance_fields_size字段
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	uint32_t nInstanceFieldSizeValue = readLeb128(pByte);
+	nSize = getLeb128Size(pByte);
+	//第三个LEB128数据是direct_methods_size字段
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	uint32_t nDirectMethodsSizeValue = readLeb128(pByte);
+	nSize = getLeb128Size(pByte);
+	return nDirectMethodsSizeValue;
+}
+//获取指定class_def_item->class_data_off_->virtual_methods_size字段值，这是LEB128类型数据
+uint32_t CMyDexObj::getClassClassDataVirtualMethodsSizeValueFromIndex(uint nIndex)
+{
+	//第一个LEB128数据是static_fields_size字段
+	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	if (pCDI == NULL)
+	{
+		return 0;
+	}
+	BYTE *pByte = (BYTE*)pCDI;
+	uint32_t nStaticFieldSizeValue = readLeb128(pByte);
+	uint nSize = getLeb128Size(pByte);
+	//第二个LEB128数据是instance_fields_size字段
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	uint32_t nInstanceFieldSizeValue = readLeb128(pByte);
+	nSize = getLeb128Size(pByte);
+	//第三个LEB128数据是direct_methods_size字段
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	uint32_t nDirectMethodsSizeValue = readLeb128(pByte);
+	nSize = getLeb128Size(pByte);
+	//第四个LEB128数据是virtual_methods_size字段
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	uint32_t nVirtualMethodsSizeValue = readLeb128(pByte);
+	nSize = getLeb128Size(pByte);
+	return nVirtualMethodsSizeValue;
+}
+//获取指定class_def_item->class_data_off_->static_fields_size字段实际占用的字节长度
+uint32_t CMyDexObj::getClassClassDataStaticFieldsSizeLenFromIndex(uint nIndex)
+{
+	//第一个LEB128数据是static_fields_size字段
+	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	BYTE *pByte = (BYTE*)pCDI;
+	uint nSize = getLeb128Size(pByte);
+	return nSize;
+}
+//获取指定class_def_item->class_data_off_->instance_fields_size字段实际占用的字节长度
+uint32_t CMyDexObj::getClassClassDataInstanceFieldsSizeLenFromIndex(uint nIndex)
+{
+	//第一个LEB128数据是static_fields_size字段
+	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	BYTE *pByte = (BYTE*)pCDI;
+	uint nSize = getLeb128Size(pByte);
+	//第二个LEB128数据是instance_fields_size字段
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	nSize = getLeb128Size(pByte);
+	return nSize;
+}
+//获取指定class_def_item->class_data_off_->direct_methods_size字段实际占用的字节长度
+uint32_t CMyDexObj::getClassClassDataDirectMethodsSizeLenFromIndex(uint nIndex)
+{
+	//第一个LEB128数据是static_fields_size字段
+	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	BYTE *pByte = (BYTE*)pCDI;
+	uint nSize = getLeb128Size(pByte);
+	//第二个LEB128数据是instance_fields_size字段
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	nSize = getLeb128Size(pByte);
+	//第三个LEB128数据是direct_methods_size字段
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	nSize = getLeb128Size(pByte);
+	return nSize;
+}
+//获取指定class_def_item->class_data_off_->virtual_methods_size字段实际占用的字节长度
+uint32_t CMyDexObj::getClassClassDataVirtualMethodsSizeLenFromIndex(uint nIndex)
+{
+	//第一个LEB128数据是static_fields_size字段
+	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	if (pCDI == NULL)
+	{
+		return 0;
+	}
+	BYTE *pByte = (BYTE*)pCDI;
+	uint nSize = getLeb128Size(pByte);
+	//第二个LEB128数据是instance_fields_size字段
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	nSize = getLeb128Size(pByte);
+	//第三个LEB128数据是direct_methods_size字段
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	nSize = getLeb128Size(pByte);
+	//第四个LEB128数据是virtual_methods_size字段
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	nSize = getLeb128Size(pByte);
+	return nSize;
+}
+//获取class_def_item->class_data_off_各字段数量指定后的首地址，其依次为实际数据的属性
+BYTE *CMyDexObj::getClassClassDataAttributeAddrFromIndex(uint nIndex)
+{
+	//第一个LEB128数据是static_fields_size字段
+	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	BYTE *pByte = (BYTE*)pCDI;
+	uint nSize = getLeb128Size(pByte);
+	//第二个LEB128数据是instance_fields_size字段
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	nSize = getLeb128Size(pByte);
+	//第三个LEB128数据是direct_methods_size字段
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	nSize = getLeb128Size(pByte);
+	//第四个LEB128数据是virtual_methods_size字段
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	nSize = getLeb128Size(pByte);
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	return pByte;
+}
+//指定class_def_item->class_data_off_->static_fields_size字段值是否为0
+bool CMyDexObj::isClassNeedShowStaticFieldsStringFromIndex(uint nIndex)
+{
+	uint32_t nSize = getClassClassDataStaticFieldsSizeValueFromIndex(nIndex);
+	return nSize != 0;
+}
+/*
+ * 获取指定class_def_item->class_data_off_->static_fields_size字段的字符串,返回值需要手动释放
+ * 返回的数据形式："[%d]method_idx_diff:%X access_flags:%X"
+ *
+ */
+const char* CMyDexObj::getClassStaticFieldsStringFromIndex(uint nIndex, uint nFieldIndex)
+{
+	char *result = new char[MAXBYTE * 4];
+	result[0] = '\0';
+	//获取class_data_off_地址加上文件起始得到4个leb128 size的地址
+	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	//隔开4个leb128数据长度即为属性首地址
+	BYTE *pByte = getNextSTAddr((BYTE*)pCDI, 4);
+	//获取static_fields_size_字段值，即其个数
+	uint nstatic_fields_size = getClassClassDataStaticFieldsSizeValueFromIndex(nIndex);
+	//避免万一，当该字段为0时不作遍历
+	if (nstatic_fields_size == 0 || nFieldIndex < 0 || nFieldIndex > nstatic_fields_size)
+	{
+		return result;
+	}
+	//目标字段条件符合预期时进行遍历
+	for (uint i = 0; i < nstatic_fields_size; i++)
+	{
+		if (i == nFieldIndex)
+		{
+			sprintf(result, "[%d]method_idx_diff:%X access_flags:%X", 
+				i,
+				getClassStaticFieldsFieldIdxDiffValueIndex(pByte),
+				getClassStaticFieldsAccessFlagsValueIndex(pByte));
+			break;
+		}
+		//每一个fields占两个leb128类型
+		pByte = getNextSTAddr(pByte);
+	}
+	return result;
+}
+//获取指定class_def_item->class_data_off_->static_fields->field_idx_diff字段值,这是一个LEB128数据
+DWORD CMyDexObj::getClassStaticFieldsFieldIdxDiffValueIndex(BYTE *pByte)
+{
+	//第一个leb128数据为field_idx_diff字段值
+	int nfield_idx_diff = readLeb128(pByte);
+	int nSize = getLeb128Size(pByte);
+	return nfield_idx_diff;
+}
+//获取指定class_def_item->class_data_off_->static_fields->access_flags字段值,这是一个LEB128数据
+DWORD CMyDexObj::getClassStaticFieldsAccessFlagsValueIndex(BYTE *pByte)
+{
+	//第一个leb128数据为field_idx_diff字段值
+	int nfield_idx_diff = readLeb128(pByte);
+	int nSize = getLeb128Size(pByte);
+	//紧跟着的leb128数据为access_flags字段值
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	int naccess_flags = readLeb128(pByte);
+	nSize = getLeb128Size(pByte);
+	return naccess_flags;
+}
+//获取下一个FieldST的BYTE地址，默认2个LEB128数据为界
+BYTE* CMyDexObj::getNextSTAddr(BYTE *pByte, int nLeb128Count)
+{
+	int nSize = 0;
+	//依次获取leb128长度，加上指针返回
+	for (int i = 0; i < nLeb128Count; i++)
+	{
+		nSize = getLeb128Size(pByte);
+		pByte = (BYTE *)(DWORD(pByte) + nSize);
+	}
+	return pByte;
+}
+
+//指定class_def_item->class_data_off_->instance_fields_size字段值是否为0
+bool CMyDexObj::isClassNeedShowInstanceFieldsStringFromIndex(uint nIndex)
+{
+	uint32_t nSize = getClassClassDataInstanceFieldsSizeValueFromIndex(nIndex);
+	return nSize != 0;
+}
+//获取指定class_def_item->class_data_off_->instance_fields_size字段的字符串,返回值需要手动释放
+const char* CMyDexObj::getClassInstanceFieldsStringFromIndex(uint nIndex, uint nFieldIndex)
+{
+	char *result = new char[MAXBYTE * 4];
+	result[0] = '\0';
+	//获取static_fields_size_字段值，即其个数
+	uint nstatic_fields_size = getClassClassDataInstanceFieldsSizeValueFromIndex(nIndex);
+	//避免万一，当该字段为0时不作遍历
+	if (nstatic_fields_size == 0 || nFieldIndex < 0 || nFieldIndex > nstatic_fields_size)
+	{
+		return result;
+	}
+	//获取instance_fields_size对应的结构首地址
+	BYTE *pByte = getClassInstanceFieldsAddrFromIndex(nIndex);
+	//目标字段条件符合预期时进行遍历
+	for (uint i = 0; i < nstatic_fields_size; i++)
+	{
+		if (i == nFieldIndex)
+		{
+			sprintf(result, "[%d]method_idx_diff:%X access_flags:%X", 
+				i,
+				getClassStaticFieldsFieldIdxDiffValueIndex(pByte),
+				getClassStaticFieldsAccessFlagsValueIndex(pByte));
+			break;
+		}
+		//每一个fields占两个leb128类型
+		pByte = getNextSTAddr(pByte);
+	}
+	return result;
+}
+//获取指定class_def_item->class_data_off_->instance_fields_size->field_idx_diff字段值,这是一个LEB128数据
+DWORD CMyDexObj::getClassInstanceFieldsFieldIdxDiffValueIndex(BYTE *pByte)
+{
+	//第一个leb128数据为field_idx_diff字段值
+	int nfield_idx_diff = readLeb128(pByte);
+	int nSize = getLeb128Size(pByte);
+	return nfield_idx_diff;
+}
+//获取指定class_def_item->class_data_off_->instance_fields_size->access_flags字段值,这是一个LEB128数据
+DWORD CMyDexObj::getClassInstanceFieldsAccessFlagsValueIndex(BYTE *pByte)
+{
+	//第一个leb128数据为field_idx_diff字段值
+	int nfield_idx_diff = readLeb128(pByte);
+	int nSize = getLeb128Size(pByte);
+	//紧跟着的leb128数据为access_flags字段值
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	int naccess_flags = readLeb128(pByte);
+	nSize = getLeb128Size(pByte);
+	return naccess_flags;
+}
+//获取指定class_def_item->class_data_off_->instance_fields指向的数据地址,没有则返回空指针！！！
+BYTE* CMyDexObj::getClassInstanceFieldsAddrFromIndex(uint nIndex)
+{
+	//意外处理
+	uint nSize = getClassClassDataInstanceFieldsSizeValueFromIndex(nIndex);
+	if (nSize == 0)
+	{
+		return NULL;
+	}
+	//首先拿这个Class的地址
+	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	//跳过4个leb表示的各个字段的数量
+	BYTE *pByte = getNextSTAddr((BYTE*)pCDI, 4);
+	//看下前面有几个static_fields数据
+	nSize = getClassClassDataStaticFieldsSizeValueFromIndex(nIndex);
+	//每个static_fields结构都是两个LEB128数据，所以跳过nSize*2个LEB数据就对了
+	pByte = getNextSTAddr(pByte, nSize * 2);
+	return pByte;
+}
+
+//指定class_def_item->class_data_off_->direct_methods_size字段值是否为0
+bool CMyDexObj::isClassNeedShowDirectMethodsStringFromIndex(uint nIndex)
+{
+	uint32_t nSize = getClassClassDataDirectMethodsSizeValueFromIndex(nIndex);
+	return nSize != 0;
+}
+//获取指定class_def_item->class_data_off_->direct_methods_size字段的字符串,返回值需要手动释放
+const char* CMyDexObj::getClassDirectMethodsStringFromIndex(uint nIndex, uint nFieldIndex)
+{
+	char *result = new char[MAXBYTE * 4];
+	result[0] = '\0';
+	//获取direct_method_size_字段值，即其个数
+	uint ndirect_method_size = getClassClassDataDirectMethodsSizeValueFromIndex(nIndex);
+	//避免万一，当该字段为0时不作遍历
+	if (ndirect_method_size == 0 || nFieldIndex < 0 || nFieldIndex > ndirect_method_size)
+	{
+		return result;
+	}
+	//获取direct_methods_size对应的结构首地址
+	BYTE *pByte = getClassDirectMethodsAddrFromIndex(nIndex);
+	//目标字段条件符合预期时进行遍历
+	for (uint i = 0; i < ndirect_method_size; i++)
+	{
+		if (i == nFieldIndex)
+		{
+			sprintf(result, "[%d]method_idx_diff:%X access_flags:%X code_off:%X", 
+				i,
+				getClassDirectMethodsMethodIdxDiffValueIndex(pByte),
+				getClassDirectMethodsAccessFlagsValueIndex(pByte),
+				getClassDirectMethodsCodeOffValueIndex(pByte));
+			break;
+		}
+		//每一个fields占3个leb128类型
+		pByte = getNextSTAddr(pByte, 3);
+	}
+	return result;
+}
+//获取指定class_def_item->class_data_off_->direct_methods_size->field_idx_diff字段值,这是一个LEB128数据
+DWORD CMyDexObj::getClassDirectMethodsMethodIdxDiffValueIndex(BYTE *pByte)
+{
+	//第一个leb128数据为method_idx_diff字段值
+	int nfield_idx_diff = readLeb128(pByte);
+	int nSize = getLeb128Size(pByte);
+	return nfield_idx_diff;
+}
+//获取指定class_def_item->class_data_off_->direct_methods_size->access_flags字段值,这是一个LEB128数据
+DWORD CMyDexObj::getClassDirectMethodsAccessFlagsValueIndex(BYTE *pByte)
+{
+	//第一个leb128数据为method_idx_diff字段值
+	int nfield_idx_diff = readLeb128(pByte);
+	int nSize = getLeb128Size(pByte);
+	//紧跟着的leb128数据为access_flags字段值
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	int naccess_flags = readLeb128(pByte);
+	nSize = getLeb128Size(pByte);
+	return naccess_flags;
+}
+//获取指定class_def_item->class_data_off_->direct_methods_size->code_off字段值,这是一个LEB128数据
+DWORD CMyDexObj::getClassDirectMethodsCodeOffValueIndex(BYTE *pByte)
+{
+	//第一个leb128数据为method_idx_diff字段值
+	int nfield_idx_diff = readLeb128(pByte);
+	int nSize = getLeb128Size(pByte);
+	//紧跟着的leb128数据为access_flags字段值
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	int naccess_flags = readLeb128(pByte);
+	nSize = getLeb128Size(pByte);
+	//紧跟着的leb128数据为code_off字段值
+	pByte = (BYTE *)(DWORD(pByte) + nSize);
+	int ncode_off = readLeb128(pByte);
+	nSize = getLeb128Size(pByte);
+	return ncode_off;
+}
+//获取指定class_def_item->class_data_off_->direct_methods_size指向的数据地址,没有则返回空指针！！！
+BYTE* CMyDexObj::getClassDirectMethodsAddrFromIndex(uint nIndex)
+{
+	//意外处理
+	uint nSize = getClassClassDataDirectMethodsSizeValueFromIndex(nIndex);
+	if (nSize == 0)
+	{
+		return NULL;
+	}
+	//首先拿这个Class的地址
+	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	//跳过4个leb表示的各个字段的数量
+	BYTE *pByte = getNextSTAddr((BYTE*)pCDI, 4);
+	//看下前面有几个static_fields数据
+	nSize = getClassClassDataStaticFieldsSizeValueFromIndex(nIndex);
+	//看下前面有几个instance_fields数据
+	nSize += getClassClassDataInstanceFieldsSizeValueFromIndex(nIndex);
+	//每个static_fields结构都是两个LEB128数据，所以跳过nSize*2个LEB数据就对了
+	pByte = getNextSTAddr(pByte, nSize * 2);
+	return pByte;
+}
+
+//指定class_def_item->class_data_off_->virtual_methods_size字段值是否为0
+bool CMyDexObj::isClassNeedShowVirtualMethodsStringFromIndex(uint nIndex)
+{
+	uint32_t nSize = getClassClassDataVirtualMethodsSizeValueFromIndex(nIndex);
+	return nSize != 0;
+}
+//获取指定class_def_item->class_data_off_->virtual_methods_size字段的字符串,返回值需要手动释放
+const char* CMyDexObj::getClassVirtualMethodsStringFromIndex(uint nIndex, uint nFieldIndex)
+{
+	char *result = new char[MAXBYTE * 4];
+	result[0] = '\0';
+	//获取direct_method_size_字段值，即其个数
+	uint nvirtual_method_size = getClassClassDataVirtualMethodsSizeValueFromIndex(nIndex);
+	//避免万一，当该字段为0时不作遍历
+	if (nvirtual_method_size == 0 || nFieldIndex < 0 || nFieldIndex > nvirtual_method_size)
+	{
+		return result;
+	}
+	//获取virtual_methods_size对应的结构首地址
+	BYTE *pByte = getClassVirtualMethodsAddrFromIndex(nIndex);
+	//目标字段条件符合预期时进行遍历
+	for (uint i = 0; i < nvirtual_method_size; i++)
+	{
+		if (i == nFieldIndex)
+		{
+			DWORD dwFlags = getClassVirtualMethodsAccessFlagsValueIndex(pByte);
+// 			sprintf(result, "[%d]method_idx_diff:%X access_flags:%X code_off:%X", 
+// 				i,
+// 				getClassVirtualMethodsFieldIdxDiffValueIndex(pByte),
+// 				dwFlags,
+// 				getClassVirtualMethodsCodeOffValueIndex(pByte));
+			const char* p = getClassAccessFlagsString(dwFlags);
+			sprintf(result, "[%d]method_idx_diff:%X access_flags:%s code_off:%X", 
+				i,
+				getClassVirtualMethodsFieldIdxDiffValueIndex(pByte),
+				p,
+				getClassVirtualMethodsCodeOffValueIndex(pByte));
+			delete[] (char*)p;
+			break;
+		}
+		//每一个fields占3个leb128类型
+		pByte = getNextSTAddr(pByte, 3);
+	}
+	return result;
+}
+//获取指定class_def_item->class_data_off_->virtual_methods_size->field_idx_diff字段值,这是一个LEB128数据
+DWORD CMyDexObj::getClassVirtualMethodsFieldIdxDiffValueIndex(BYTE *pByte)
+{
+	return getClassDirectMethodsMethodIdxDiffValueIndex(pByte);
+}
+//获取指定class_def_item->class_data_off_->virtual_methods_size->access_flags字段值,这是一个LEB128数据
+DWORD CMyDexObj::getClassVirtualMethodsAccessFlagsValueIndex(BYTE *pByte)
+{
+	return getClassDirectMethodsAccessFlagsValueIndex(pByte);
+}
+//获取指定class_def_item->class_data_off_->virtual_methods_size->code_off字段值,这是一个LEB128数据
+DWORD CMyDexObj::getClassVirtualMethodsCodeOffValueIndex(BYTE *pByte)
+{
+	return getClassDirectMethodsCodeOffValueIndex(pByte);
+}
+//获取指定class_def_item->class_data_off_->virtual_methods_size指向的数据地址,没有则返回空指针！！！
+BYTE* CMyDexObj::getClassVirtualMethodsAddrFromIndex(uint nIndex)
+{
+	//意外处理
+	uint nSize = getClassClassDataVirtualMethodsSizeValueFromIndex(nIndex);
+	if (nSize == 0)
+	{
+		return NULL;
+	}
+	//首先拿这个Class的地址
+	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	//跳过4个leb表示的各个字段的数量
+	BYTE *pByte = getNextSTAddr((BYTE*)pCDI, 4);
+	//看下前面有几个static_fields数据,每个static_fields结构都是两个LEB128数据
+	nSize = getClassClassDataStaticFieldsSizeValueFromIndex(nIndex) * 2;
+	//看下前面有几个instance_fields数据每个static_fields结构都是两个LEB128数据
+	nSize += getClassClassDataInstanceFieldsSizeValueFromIndex(nIndex) * 2;
+	//看下前面有几个direct_method_fields数据每个static_fields结构都是三个LEB128数据，
+	nSize += getClassClassDataDirectMethodsSizeValueFromIndex(nIndex) * 3;
+	//所以跳过LEB数据就对了
+	pByte = getNextSTAddr(pByte, nSize);
+	return pByte;
 }

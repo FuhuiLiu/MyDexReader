@@ -250,6 +250,64 @@ void MyDexShowUtils::showAllClasses()	//显示所有class信息
             printf("\t%s\r\n", p);
             delete[] (char *)p;
         }
+		//class_data_off_信息
+        if (m_pDexObj->isClassNeedShowClassDataString(i))
+        {
+			//输出class_data_item字段信息
+            const char *p = m_pDexObj->getClassClassDataStringFromIndex(i);
+            printf("\t%s\r\n", p);
+            delete[] (char *)p;
+
+			//fields字段与methods字段结构不同，需要区别对待
+        }
+		//static_fields_size信息是否需要输出
+		if (m_pDexObj->isClassNeedShowStaticFieldsStringFromIndex(i))
+		{
+			uint nSize = m_pDexObj->getClassClassDataStaticFieldsSizeValueFromIndex(i);
+			printf("\t\tstatic_fields_size_[%d]\r\n", nSize);
+			for (uint j = 0; j < nSize; j++)
+			{
+				const char* p = m_pDexObj->getClassStaticFieldsStringFromIndex(i, j);
+				printf("\t\t\t%s\r\n", p);
+				delete[] (char *)p;
+			}
+		}
+		//instance_fields_size信息是否需要输出
+		if (m_pDexObj->isClassNeedShowInstanceFieldsStringFromIndex(i))
+		{
+			uint nSize = m_pDexObj->getClassClassDataInstanceFieldsSizeValueFromIndex(i);
+			printf("\t\tinstatic_fields_size_[%d]\r\n", nSize);
+			for (uint j = 0; j < nSize; j++)
+			{
+				const char* p = m_pDexObj->getClassInstanceFieldsStringFromIndex(i, j);
+				printf("\t\t\t%s\r\n", p);
+				delete[] (char *)p;
+			}
+		}
+		//direct_methods_size信息是否需要输出
+		if (m_pDexObj->isClassNeedShowDirectMethodsStringFromIndex(i))
+		{
+			uint nSize = m_pDexObj->getClassClassDataDirectMethodsSizeValueFromIndex(i);
+			printf("\t\tdirect_methods_size_[%d]\r\n", nSize);
+			for (uint j = 0; j < nSize; j++)
+			{
+				const char* p = m_pDexObj->getClassDirectMethodsStringFromIndex(i, j);
+				printf("\t\t\t%s\r\n", p);
+				delete[] (char *)p;
+			}
+		}
+		//virtual_methods_size信息是否需要输出
+		if (m_pDexObj->isClassNeedShowVirtualMethodsStringFromIndex(i))
+		{
+			uint nSize = m_pDexObj->getClassClassDataVirtualMethodsSizeValueFromIndex(i);
+			printf("\t\tvirtual_methods_size_[%d]\r\n", nSize);
+			for (uint j = 0; j < nSize; j++)
+			{
+				const char* p = m_pDexObj->getClassVirtualMethodsStringFromIndex(i, j);
+				printf("\t\t\t%s\r\n", p);
+				delete[] (char *)p;
+			}
+		}
 	}
     MsgEnd("AllClasses");
 }

@@ -141,6 +141,83 @@ public:
     //获取指定Class下标的interfaces_off_结构下的list_结构数量
     uint32_t getClassInterfaceListSizeFromIndex(uint nIndex);
 
+	//根据class_def_item->class_data_off_字段值判断是否需要输出
+	bool isClassNeedShowClassDataString(uint nIndex);
+    //获取相应Class结构中的class_data_off_结构数据,返回值需要手动释放
+    const char* getClassClassDataStringFromIndex(uint nIndex);
+	//获取指定Class结构中的STClassDataItem结构指定
+	PSTClassDataItem getClassClassDataSTFromIndex(uint nIndex);
+	//获取指定class_def_item->class_data_off_->static_fields_size字段值，这是LEB128类型数据
+	uint32_t getClassClassDataStaticFieldsSizeValueFromIndex(uint nIndex);
+	//获取指定class_def_item->class_data_off_->instance_fields_size字段值，这是LEB128类型数据
+	uint32_t getClassClassDataInstanceFieldsSizeValueFromIndex(uint nIndex);
+	//获取指定class_def_item->class_data_off_->direct_methods_size字段值，这是LEB128类型数据
+	uint32_t getClassClassDataDirectMethodsSizeValueFromIndex(uint nIndex);
+	//获取指定class_def_item->class_data_off_->virtual_methods_size字段值，这是LEB128类型数据
+	uint32_t getClassClassDataVirtualMethodsSizeValueFromIndex(uint nIndex);
+	//获取指定class_def_item->class_data_off_->virtual_methods_size字段实际占用的字节长度
+	uint32_t getClassClassDataStaticFieldsSizeLenFromIndex(uint nIndex);
+	//获取指定class_def_item->class_data_off_->instance_fields_size字段实际占用的字节长度
+	uint32_t getClassClassDataInstanceFieldsSizeLenFromIndex(uint nIndex);
+	//获取指定class_def_item->class_data_off_->direct_methods_size字段实际占用的字节长度
+	uint32_t getClassClassDataDirectMethodsSizeLenFromIndex(uint nIndex);
+	//获取指定class_def_item->class_data_off_->virtual_methods_size字段实际占用的字节长度
+	uint32_t getClassClassDataVirtualMethodsSizeLenFromIndex(uint nIndex);
+
+	//获取class_def_item->class_data_off_各字段数量指定后的首地址，其依次为实际数据的属性
+	BYTE *getClassClassDataAttributeAddrFromIndex(uint nIndex);
+
+	//指定class_def_item->class_data_off_->static_fields_size字段值是否为0
+	bool isClassNeedShowStaticFieldsStringFromIndex(uint nIndex);
+	//获取指定class_def_item->class_data_off_->static_fields_size字段的字符串,返回值需要手动释放
+	const char* getClassStaticFieldsStringFromIndex(uint nIndex, uint nFieldIndex);
+	//获取指定class_def_item->class_data_off_->static_fields->field_idx_diff字段值,这是一个LEB128数据
+	DWORD getClassStaticFieldsFieldIdxDiffValueIndex(BYTE *pByte);
+	//获取指定class_def_item->class_data_off_->static_fields->access_flags字段值,这是一个LEB128数据
+	DWORD getClassStaticFieldsAccessFlagsValueIndex(BYTE *pByte);
+	//获取下一个FieldST的BYTE地址，默认2个LEB128数据为界
+	BYTE* getNextSTAddr(BYTE *pByte, int nLeb128Count = 2);
+	
+	//指定class_def_item->class_data_off_->instance_fields_size字段值是否为0
+	bool isClassNeedShowInstanceFieldsStringFromIndex(uint nIndex);
+	//获取指定class_def_item->class_data_off_->instance_fields_size字段的字符串,返回值需要手动释放
+	const char* getClassInstanceFieldsStringFromIndex(uint nIndex, uint nFieldIndex);
+	//获取指定class_def_item->class_data_off_->instance_fields_size->field_idx_diff字段值,这是一个LEB128数据
+	DWORD getClassInstanceFieldsFieldIdxDiffValueIndex(BYTE *pByte);
+	//获取指定class_def_item->class_data_off_->instance_fields_size->access_flags字段值,这是一个LEB128数据
+	DWORD getClassInstanceFieldsAccessFlagsValueIndex(BYTE *pByte);
+	//获取指定class_def_item->class_data_off_->instance_fields指向的数据地址,没有则返回空指针！！！
+	BYTE* getClassInstanceFieldsAddrFromIndex(uint nIndex);
+	
+	//指定class_def_item->class_data_off_->direct_methods_size字段值是否为0
+	bool isClassNeedShowDirectMethodsStringFromIndex(uint nIndex);
+	//获取指定class_def_item->class_data_off_->direct_methods_size字段的字符串,返回值需要手动释放
+	const char* getClassDirectMethodsStringFromIndex(uint nIndex, uint nFieldIndex);
+	//获取指定class_def_item->class_data_off_->direct_methods_size->field_idx_diff字段值,这是一个LEB128数据
+	DWORD getClassDirectMethodsMethodIdxDiffValueIndex(BYTE *pByte);
+	//获取指定class_def_item->class_data_off_->direct_methods_size->access_flags字段值,这是一个LEB128数据
+	DWORD getClassDirectMethodsAccessFlagsValueIndex(BYTE *pByte);
+	//获取指定class_def_item->class_data_off_->direct_methods_size->code_off字段值,这是一个LEB128数据
+	DWORD getClassDirectMethodsCodeOffValueIndex(BYTE *pByte);
+	//获取指定class_def_item->class_data_off_->direct_methods_size指向的数据地址,没有则返回空指针！！！
+	BYTE* getClassDirectMethodsAddrFromIndex(uint nIndex);
+	
+	//指定class_def_item->class_data_off_->virtual_methods_size字段值是否为0
+	bool isClassNeedShowVirtualMethodsStringFromIndex(uint nIndex);
+	//获取指定class_def_item->class_data_off_->virtual_methods_size字段的字符串,返回值需要手动释放
+	const char* getClassVirtualMethodsStringFromIndex(uint nIndex, uint nFieldIndex);
+	//获取指定class_def_item->class_data_off_->virtual_methods_size->field_idx_diff字段值,这是一个LEB128数据
+	DWORD getClassVirtualMethodsFieldIdxDiffValueIndex(BYTE *pByte);
+	//获取指定class_def_item->class_data_off_->virtual_methods_size->access_flags字段值,这是一个LEB128数据
+	DWORD getClassVirtualMethodsAccessFlagsValueIndex(BYTE *pByte);
+	//获取指定class_def_item->class_data_off_->virtual_methods_size->code_off字段值,这是一个LEB128数据
+	DWORD getClassVirtualMethodsCodeOffValueIndex(BYTE *pByte);
+	//获取指定class_def_item->class_data_off_->virtual_methods_size指向的数据地址,没有则返回空指针！！！
+	BYTE* getClassVirtualMethodsAddrFromIndex(uint nIndex);
+
+	//返回访问标志字符串，返回值需要手动delete []
+	const char* getClassAccessFlagsString(DWORD dwFlags);
+	
 protected:
 private:
     void *m_pNew;

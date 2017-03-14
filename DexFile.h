@@ -195,7 +195,7 @@ typedef struct ClassDataHeader {
     uint32_t instance_fields_size_;  // the number of instance fields
     uint32_t direct_methods_size_;  // the number of direct methods
     uint32_t virtual_methods_size_;  // the number of virtual methods
-  } STClassDataItem, *pSTClassDataItem;
+  } STClassDataItem, *PSTClassDataItem;
 
 // Raw code_item.
 typedef struct CodeItem {
