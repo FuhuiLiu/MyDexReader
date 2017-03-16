@@ -111,6 +111,16 @@ CMyDexObj::CMyDexObj() : m_pNew(NULL), m_pHeader(NULL), m_pMapInfo(NULL)
 bool CMyDexObj::isDexFile()
 {
     ASSERT(m_pHeader != NULL);
+    //文件是否以dex 035开头
+    if(m_pHeader->magic_[0] != 'd' || 
+        m_pHeader->magic_[1] != 'e' ||
+        m_pHeader->magic_[2] != 'x' ||
+        m_pHeader->magic_[4] != '0' ||
+        m_pHeader->magic_[5] != '3' ||
+        m_pHeader->magic_[6] != '5')
+    {
+        return false;
+    }
 
     return true;
 }
@@ -380,7 +390,7 @@ const STMapInfo* CMyDexObj::getMapInfo()  //拿map_list结构起始地址
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：遍历对应MapItem返回指定类型结构的指针
  * 函数参数: 目录Item类型
- * 函数返回值：存在返回对应指针，否则返回-1
+ * 函数返回值：存在返回对应指针，否则返回NULL
  */
 ///////////////////////////////////////////////////////////////////////////
 STMapItem * CMyDexObj::getMapItemWithType(EMMapItemType type)
@@ -392,7 +402,7 @@ STMapItem * CMyDexObj::getMapItemWithType(EMMapItemType type)
             return &m_pMapItem[i];
         }
     }
-    return (STMapItem *)EERROR;
+    return NULL;//(STMapItem *)EERROR;
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取MapItem个数
@@ -472,21 +482,38 @@ DWORD CMyDexObj::getStringItemSize()
 const char* CMyDexObj::getStringIdStringFromIndex(uint nIndex)
 {
     ASSERT(nIndex < m_nStringIdItemSize && nIndex >= 0);
-    //字符串数据首地址
-    BYTE *pLeb128 = getStringIdItemAddrFromIndex(nIndex);
+    //从stringids数组读出下标的string_data_off字段值，其为文件偏移
+    BYTE *pLeb128 = getStringIdsStringDataOffSTFromIndex(nIndex);
+    if (!pLeb128)
+    {
+        return "getStringIdsStringDataOffSTFromIndex ret NULL!";
+    }
+    //所以要读取数据必须先加上文件首地址
+    pLeb128 = (BYTE *)((DWORD)pLeb128 + getFileBeginAddr());
     //item首地址为leb128类型数据来指示这个ITEM中的字符串的长度
     return (char *)((DWORD)pLeb128 + getLeb128Size(pLeb128));
 }
 ///////////////////////////////////////////////////////////////////////////
-/* 函数功能：拿指定下标的StringItem首地址
- * 函数参数: 下标
+/* 函数功能：拿string_id_list指定下标的string_data_off字段值，
+              其为指向的StringItem结构的文件偏移地址
+ * 函数参数: nIndex 目标string_id_list数组下标
  * 函数返回值：
 */
 ///////////////////////////////////////////////////////////////////////////
-BYTE *CMyDexObj::getStringIdItemAddrFromIndex(uint nIndex)
+uint CMyDexObj::getStringIdsStringDataOffValueFromIndex(uint nIndex)
 {
     ASSERT(nIndex < m_nStringIdItemSize && nIndex >= 0);
-    return (BYTE*)(getFileBeginAddr() + (DWORD)m_pStringItem[nIndex].m_nOffset);
+    return m_pStringItem[nIndex].m_nOffset;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：拿string_id_list指定下标的string_data_off指向的StringItem的结构文件偏移
+ * 函数参数: nIndex 目标string_id_list数组下标
+ * 函数返回值：
+*/
+///////////////////////////////////////////////////////////////////////////
+BYTE *CMyDexObj::getStringIdsStringDataOffSTFromIndex(uint nIndex)
+{
+    return (BYTE*)getStringIdsStringDataOffValueFromIndex(nIndex);
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：拿指定下标字符串的长度
@@ -497,8 +524,14 @@ BYTE *CMyDexObj::getStringIdItemAddrFromIndex(uint nIndex)
 DWORD CMyDexObj::getStringLenFromIndex(uint nIndex)
 {
     ASSERT(nIndex < m_nStringIdItemSize && nIndex >= 0);
-    BYTE *pByte = getStringIdItemAddrFromIndex(nIndex);
-
+    //从stringids数组读出下标的string_data_off字段值
+    BYTE *pByte = getStringIdsStringDataOffSTFromIndex(nIndex);
+    if (!pByte)
+    {
+        return 0;
+    }
+    //返回值实际是结构在文件的偏移地址，所以加上首地址
+    pByte = (BYTE *)(DWORD(pByte) + getFileBeginAddr());
     return readLeb128(pByte);
 }
 ///////////////////////////////////////////////////////////////////////////
@@ -522,6 +555,10 @@ const char* CMyDexObj::getTypeIdStringFromIndex(uint nIndex)
 {
     //调用getStringFromId接口，m_pTypeIdItem[nIndex].descriptor_idx_拿对应下标
     ASSERT(nIndex < m_nTypeIdItemSize && nIndex >= 0);
+//     if (!(nIndex < m_nTypeIdItemSize && nIndex >= 0))
+//     {
+//         printf("m_nTypeIdItemSize:%d nIndex:%d", m_nTypeIdItemSize, nIndex);
+//     }
     return getStringIdStringFromIndex(m_pTypeIdItem[nIndex].descriptor_idx_);
 }
 ///////////////////////////////////////////////////////////////////////////
@@ -622,7 +659,7 @@ bool CMyDexObj::ColletionProtoIdItem()
         const char* pstr = getProtoIdsParametersStringFromIndex(i);
         printf("%s\r\n", pstr);
         delete[] (char*)pstr;
-        pstr = getProtoIdStringFromIndex(i);
+        pstr = getProtoIdsProtoStringFromIndex(i);
         printf("\tProtoIdString: %s\r\n", pstr);
         delete[] (char*)pstr;
     }
@@ -630,7 +667,7 @@ bool CMyDexObj::ColletionProtoIdItem()
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：拿ProteIds指定下标方法的极简返回值跟参数字符串
- * 函数参数: nIndex 要获取的下标
+ * 函数参数: nIndex 要获取的protoids下标
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
@@ -641,7 +678,7 @@ const char* CMyDexObj::getProtoIdsShortyIdxStringFromIndex(uint nProtoIdsIndex)
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：拿ProteIds指定下标方法的返回类型字符串
- * 函数参数: nIndex 下标
+ * 函数参数: nIndex protoids下标
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
@@ -661,13 +698,12 @@ const char* CMyDexObj::getProtoIdsParametersStringFromIndex(uint nProtoIdsIndex)
     char temp[MAXBYTE];
     char *tempret = new char[MAXBYTE * 4];
     tempret[0] = '\0';
-    //拿参数字段偏移
+    //拿parameters_off字段值
     DWORD dwOff = getProtoIdsParametersOffValueFromIndex(nProtoIdsIndex);
     //没有参数时该off为0 
     if (dwOff != 0)
     {
-		//这里可以优化成函数
-		
+		//dwOff = (DWORD)getProtoIdsTypeItemListSTFileOffsetFromIndex(nProtoIdsIndex)
         PSTTypeItemList pTL = (PSTTypeItemList)(dwOff + getFileBeginAddr());
         sprintf(temp, "parameters_off[%d]: ", pTL->size_);
         strcpy(tempret, temp);
@@ -727,18 +763,18 @@ DWORD CMyDexObj::getProtoIdsReturnTypeIdxValueFromIndex(uint nProtoIdsIndex)
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
-DWORD CMyDexObj::getProtoIdsParametersValueFromIndex(uint nProtoIdsIndex)
-{
-    //取出proto结构下标数据
-    STProtoIdItem *pST = NULL;
-    pST = getProtoIdsSTFromIndex(nProtoIdsIndex);
-	//异常规避
-	if (!pST)
-	{
-		return 0;
-	}
-    return pST->parameters_off_;
-}
+// DWORD CMyDexObj::getProtoIdsParametersValueFromIndex(uint nProtoIdsIndex)
+// {
+//     //取出proto结构下标数据
+//     STProtoIdItem *pST = NULL;
+//     pST = getProtoIdsSTFromIndex(nProtoIdsIndex);
+// 	//异常规避
+// 	if (!pST)
+// 	{
+// 		return 0;
+// 	}
+//     return pST->parameters_off_;
+// }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：拿proto_id_list指定下标的proto_id_item结构首地址
  * 函数参数: nIndex要获取的下标
@@ -767,30 +803,33 @@ DWORD CMyDexObj::getProtoIdsParametersOffValueFromIndex(uint nIndex)
     return 0;
 }
 ///////////////////////////////////////////////////////////////////////////
-/* 函数功能：获取指定下标parameters_off指向的TypeItemList结构文件偏移地址，若相关参数off为0则返回值为空
+/* 函数功能：获取指定下标parameters_off指向的TypeItemList
+                {uint size; type_item list[size]}结构文件偏移地址，
+                若相关参数off为0则返回值为空
  * 函数参数: nIndex要获取的下标
  * 函数返回值：该下标的结构体指针
  */
 ///////////////////////////////////////////////////////////////////////////
-STTypeItemList *CMyDexObj::getProtoIdsTypeListFromIndex(uint nIndex)
+STTypeItemList *CMyDexObj::getProtoIdsTypeItemListSTFileOffsetFromIndex(uint nIndex)
 {
-    DWORD dwParametersOff = getProtoIdsParametersOffValueFromIndex(nIndex);
-    //参数列表不为空才读取返回
-    if(dwParametersOff != 0)
-    {
-        //循环输出参数
-        STTypeItemList *pTL = (STTypeItemList *)(dwParametersOff);
-        return pTL;
-    }
-    return NULL;
+    return (STTypeItemList *)getProtoIdsParametersOffValueFromIndex(nIndex);
+//     DWORD dwParametersOff = getProtoIdsParametersOffValueFromIndex(nIndex);
+//     //参数列表不为空才读取返回
+//     if(dwParametersOff != 0)
+//     {
+//         //循环输出参数
+//         STTypeItemList *pTL = (STTypeItemList *)(dwParametersOff);
+//         return pTL;
+//     }
+//     return NULL;
 }
 ///////////////////////////////////////////////////////////////////////////
-/* 函数功能：拿proto_id_list数组指定下标的函数原型信息,返回值需要手动释放
- * 函数参数: nIndex要获取的下标
+/* 函数功能：组合proto_id_list数组指定下标的函数原型信息,返回值需要手动释放
+ * 函数参数: nIndex要获取的proto_ids下标
  * 函数返回值：该下标的结构体指针
  */
 ///////////////////////////////////////////////////////////////////////////
-const char* CMyDexObj::getProtoIdStringFromIndex(uint nIndex)
+const char* CMyDexObj::getProtoIdsProtoStringFromIndex(uint nIndex)
 {
     char temp[MAXBYTE];
     char *Tempret = new char[MAXBYTE *4];
@@ -829,8 +868,8 @@ bool CMyDexObj::initFieldIdItemST()
 {
     //遍历MapItem是否存在对应类型结构数据
     STMapItem *pST = (STMapItem *)getMapItemWithType(kDexTypeFieldIdItem);
-    //如果存在
-    if((DWORD)pST != EERROR)
+    //如果返回不为空
+    if(pST)
     {
         //保存指向FieldIdItem的指针=MapItem结构指向的偏移+文件头地址
         m_pFieldIdItem = (STFieldIdItem*)((DWORD)pST->offset_ + getFileBeginAddr());
@@ -862,14 +901,14 @@ bool CMyDexObj::ColletionFieldIdItem()
         printf("[%d]: class_idx: %s type_idx: %s name_idx: %s\r\n",
             i, 
             getTypeIdStringFromIndex(getFieldIdsClassIdxValueFromIndex(i)), 
-            getTypeIdStringFromIndex(getFieldIdsProtoIdxValueFromIndex(i)), 
+            getTypeIdStringFromIndex(getFieldIdsTypeIdxValueFromIndex(i)), 
             getStringIdStringFromIndex(getFieldIdsNameIdxValueFromIndex(i)));
     }
     return true;
 }
 ///////////////////////////////////////////////////////////////////////////
-/* 函数功能：拿field_id_list指定下标的结构首地址
- * 函数参数: nIndex要获取的下标
+/* 函数功能：拿field_id_list指定下标的field_id_item结构首地址
+ * 函数参数: nIndex要获取的fieldsids下标
  * 函数返回值：该下标的结构体指针
  */
 ///////////////////////////////////////////////////////////////////////////
@@ -887,7 +926,11 @@ STFieldIdItem* CMyDexObj::getFieldIdSTFromIndex(uint nIndex)
 ///////////////////////////////////////////////////////////////////////////
 uint16_t CMyDexObj::getFieldIdsClassIdxValueFromIndex(uint nIndex)
 {
-	PSTMethodIdItem pST = getMethodIdSTFromIndex(nIndex);
+	PSTFieldIdItem pST = getFieldIdSTFromIndex(nIndex);
+    if (!pST)
+    {
+        return 0;
+    }
 	return pST->class_idx_;
 }
 ///////////////////////////////////////////////////////////////////////////
@@ -896,20 +939,28 @@ uint16_t CMyDexObj::getFieldIdsClassIdxValueFromIndex(uint nIndex)
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
-uint16_t CMyDexObj::getFieldIdsProtoIdxValueFromIndex(uint nIndex)
+uint16_t CMyDexObj::getFieldIdsTypeIdxValueFromIndex(uint nIndex)
 {
-	PSTMethodIdItem pST = getMethodIdSTFromIndex(nIndex);
-	return pST->proto_idx_;
+    PSTFieldIdItem pST = getFieldIdSTFromIndex(nIndex);
+    if (!pST)
+    {
+        return 0;
+    }
+	return pST->type_idx_;
 }
 ///////////////////////////////////////////////////////////////////////////
-/* 函数功能：从MethodId结构中拿指定下标的field_id_item结构的name_idx_字段值
+/* 函数功能：从FieldId结构中拿指定下标的field_id_item结构的name_idx_字段值
  * 函数参数: 
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getFieldIdsNameIdxValueFromIndex(uint nIndex)
 {
-	PSTMethodIdItem pST = getMethodIdSTFromIndex(nIndex);
+    PSTFieldIdItem pST = getFieldIdSTFromIndex(nIndex);
+    if (!pST)
+    {
+        return 0;
+    }
 	return pST->name_idx_;
 }
 ///////////////////////////////////////////////////////////////////////////
@@ -929,33 +980,45 @@ DWORD CMyDexObj::getFieldIdSizeFromSave()
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
-DWORD CMyDexObj::getFieldClassIdxValueFromIndex(uint nIndex)
-{
-	STFieldIdItem *pST = getFieldIdSTFromIndex(nIndex);
-	return pST->class_idx_;
-}
+// DWORD CMyDexObj::getFieldClassIdxValueFromIndex(uint nIndex)
+// {
+// 	STFieldIdItem *pST = getFieldIdSTFromIndex(nIndex);
+//     if (!pST)
+//     {
+//         return 0;
+//     }
+// 	return pST->class_idx_;
+// }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：拿field_id_item数组指定下标的type_idx_字段值
  * 函数参数: 
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
-DWORD CMyDexObj::getFieldTypeIdxValueFromIndex(uint nIndex)
-{
-	STFieldIdItem *pST = getFieldIdSTFromIndex(nIndex);
-	return pST->type_idx_;
-}
+// DWORD CMyDexObj::getFieldTypeIdxValueFromIndex(uint nIndex)
+// {
+//     STFieldIdItem *pST = getFieldIdSTFromIndex(nIndex);
+//     if (!pST)
+//     {
+//         return 0;
+//     }
+// 	return pST->type_idx_;
+// }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：拿field_id_item数组指定下标的name_idx_字段值
  * 函数参数: 
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
-DWORD CMyDexObj::getFieldNameIdxValueFromIndex(uint nIndex)
-{
-	STFieldIdItem *pST = getFieldIdSTFromIndex(nIndex);
-	return pST->name_idx_;
-}
+// DWORD CMyDexObj::getFieldNameIdxValueFromIndex(uint nIndex)
+// {
+//     STFieldIdItem *pST = getFieldIdSTFromIndex(nIndex);
+//     if (!pST)
+//     {
+//         return 0;
+//     }
+// 	return pST->name_idx_;
+// }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：拿field_id_item数组指定下标的type_idx_表示的字符串
  * 函数参数: 
@@ -966,7 +1029,7 @@ const char* CMyDexObj::getFieldTypeIdxStringFromIndex(uint nIndex)
 {
 	//获取type_idx_字段值,这个字段即为type_ids_字符串数组下标
 	//m_pDexObj->getTypeIdStringFromId(m_pDexObj->getProto_Idx_FromId(i)), 
-	return getTypeIdStringFromIndex(getFieldTypeIdxValueFromIndex(nIndex));
+	return getTypeIdStringFromIndex(getFieldIdsTypeIdxValueFromIndex(nIndex));
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：拿field_id_item数组指定下标的class_idx_表示的字符串
@@ -978,7 +1041,7 @@ const char* CMyDexObj::getFieldClassIdxStringFromIndex(uint nIndex)
 {
 	//获取class_idx_字段值，这个字段即为type_ids_字符串数组下标
 	//m_pDexObj->getTypeIdStringFromId(m_pDexObj->getClass_Idx_FromId(i)), 
-	return getTypeIdStringFromIndex(getFieldClassIdxValueFromIndex(nIndex));
+	return getTypeIdStringFromIndex(getFieldIdsClassIdxValueFromIndex(nIndex));
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：拿field_id_item数组指定下标的name_idx_表示的字符串
@@ -990,7 +1053,7 @@ const char* CMyDexObj::getFieldNameIdxStringFromIndex(uint nIndex)
 {
 	//获取name_idx_字段值,这个字段即为type_ids_字符串数组下标
 	//m_pDexObj->getStringIdStringFromId(m_pDexObj->getName_Idx_FromId(i))
-	return getStringIdStringFromIndex(getFieldNameIdxValueFromIndex(nIndex));
+	return getStringIdStringFromIndex(getFieldIdsNameIdxValueFromIndex(nIndex));
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -1035,7 +1098,7 @@ bool CMyDexObj::ColletionMethodIdItem()     //收集method_id_item表
         printf("[%d]: class_idx: %s proto_idx_: ",
             i, 
             getTypeIdStringFromIndex(pST->class_idx_));
-        getProtoIdStringFromIndex(pST->proto_idx_);
+        getProtoIdsProtoStringFromIndex(pST->proto_idx_);
         printf(" name_idx: %s\r\n", getStringIdStringFromIndex(pST->name_idx_));
     }
     return true;
@@ -1068,7 +1131,7 @@ void CMyDexObj::showMethodStringAt(uint nIndex)
     ASSERT(m_pMethodIdItem != NULL);
     ASSERT(getMethodIdSizeFromSave() > nIndex && nIndex >= 0);
     STMethodIdItem *pSTMI = &m_pMethodIdItem[nIndex];
-    getProtoIdStringFromIndex(pSTMI->proto_idx_);
+    getProtoIdsProtoStringFromIndex(pSTMI->proto_idx_);
     printf(" %s.%s\r\n",
         getTypeIdStringFromIndex(pSTMI->class_idx_), 
         getStringIdStringFromIndex(pSTMI->name_idx_));
@@ -1092,7 +1155,7 @@ const char* CMyDexObj::getMethodClassIdxStringFromIndex(uint nIndex)
 ///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getMethodProtoIdxStringFromIndex(uint nIndex)
 {
-	return getProtoIdStringFromIndex(getMethodProtoIdxValueFromIndex(nIndex));
+	return getProtoIdsProtoStringFromIndex(getMethodProtoIdxValueFromIndex(nIndex));
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：拿method_id_item数组指定下标方法的方法名字符串

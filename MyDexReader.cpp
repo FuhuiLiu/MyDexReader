@@ -13,13 +13,15 @@ int main(int argc, char* argv[])
     bool bRet = pST->init(argv[1]);
     if (bRet)
     {
-        //pST->showAllString();
-        //pST->showAllType();
-        //pST->showAllProto();
-		//pST->showAllFields();
+        pST->showAllString();
+        pST->showAllType();
+        pST->showAllProto();
+		pST->showAllFields();
 		pST->showAllMethods();
-		//pST->showAllClasses();
+		pST->showAllClasses();
     }
+    else
+        printf("not dex035 file!\r\n");
 
 	return 0;
 }

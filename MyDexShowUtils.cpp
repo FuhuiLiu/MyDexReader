@@ -36,6 +36,10 @@ bool MyDexShowUtils::init(const char* pDexFilePath)
         m_pDexObj = new CMyDexObj();
         if(m_pDexObj->init(m_pNewAddr))
             bRet = true;
+        else
+        {
+            return bRet;
+        }
         STHeader *pH = NULL;
         DWORD dwDexFileSize = m_pDexObj->getFileSize();
         DWORD dwFileSizeFileObj = m_FileObj->MyGetFileSize();
@@ -148,7 +152,7 @@ void MyDexShowUtils::showAllProto()  //显示所有proto信息
         const char* pstr = m_pDexObj->getProtoIdsParametersStringFromIndex(i);
         printf("%s\r\n", pstr);
         delete[] (char*)pstr;
-        pstr = m_pDexObj->getProtoIdStringFromIndex(i);
+        pstr = m_pDexObj->getProtoIdsProtoStringFromIndex(i);
         printf("\tProtoIdString: %s\r\n", pstr);
         delete[] (char*)pstr;
     }
@@ -158,7 +162,8 @@ void MyDexShowUtils::showAllProto()  //显示所有proto信息
 void MyDexShowUtils::showAllFields()  //显示所有fields信息
 {
     MsgStart("AllFields");
-	for (DWORD i = 0; i < m_pDexObj->getFieldIdSizeFromSave(); i++)
+    DWORD dwSize = m_pDexObj->getFieldIdSizeFromSave();
+	for (DWORD i = 0; i < dwSize; i++)
 	{
 		const char* pClass = m_pDexObj->getFieldClassIdxStringFromIndex(i);
 		const char* pType = m_pDexObj->getFieldTypeIdxStringFromIndex(i);
