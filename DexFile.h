@@ -48,12 +48,12 @@ typedef struct Header{
 // Map item type codes. 
 enum EMMapItemType{
     kDexTypeHeaderItem               = 0x0000,
-    kDexTypeStringIdItem             = 0x0001,
-    kDexTypeTypeIdItem               = 0x0002,
-    kDexTypeProtoIdItem              = 0x0003,
-    kDexTypeFieldIdItem              = 0x0004,
-    kDexTypeMethodIdItem             = 0x0005,
-    kDexTypeClassDefItem             = 0x0006,
+    kDexTypeStringIdItem             = 0x0001,	//字符串MapItem
+    kDexTypeTypeIdItem               = 0x0002,	//类型MapItem
+    kDexTypeProtoIdItem              = 0x0003,	//方法原型MapItem
+    kDexTypeFieldIdItem              = 0x0004,	//域MapItem
+    kDexTypeMethodIdItem             = 0x0005,	//方法MapItem
+    kDexTypeClassDefItem             = 0x0006,	//类MapItem
     kDexTypeMapList                  = 0x1000,
     kDexTypeTypeList                 = 0x1001,
     kDexTypeAnnotationSetRefList     = 0x1002,
@@ -72,24 +72,24 @@ typedef struct MAPITEM {
     uint16_t unused_;   //unused
     uint32_t size_;     //类型个数
     uint32_t offset_;   //在文件中的偏移
-} STMapItem;
+} STMapItem, *PSTMapItem;
 
 // 由DexHeader中的map_off字段指定在文件中的偏移 = header->map_off
 typedef struct MAPINFO
 {
    uint m_nSize; //指示有多少个MapItem结构
    STMapItem m_MapItem[1]; //MapItem结构
-} STMapInfo;
+} STMapInfo, *PSTMapInfo;
 
 typedef struct STRING_ID_ITEM
 {
-    uint m_nOffset; //基于文件的偏移
+    uint m_nOffset; //基于文件的结构偏移
 } STStringIdItem;
 
 // Raw type_id_item. 类型表
 typedef struct TypeId {
     uint32_t descriptor_idx_;  // 基于string_ids的下标
-} STTypeIdItem;
+} STTypeIdItem, *PSTTypeIdItem;
 
 // Raw proto_id_item. 函数类型表
 typedef struct ProtoId {
@@ -104,11 +104,11 @@ typedef struct TypeItem {
     uint16_t type_idx_;         // 基于type_ids的下标
 } STTypeItem, *PSTTypeItem;
 
-// Raw type_list. ProtoId结构中的参数类型指针实际结构
+// Raw type_list. ProtoId结构中parameters_off指向的实际结构
 typedef struct TypeList {
     uint32_t size_;             //指示其后list实际Item数量
     TypeItem list_[1];          //TypeItem数组
-} STTypeList, *PSTTypeList;
+} STTypeItemList, *PSTTypeItemList;
 
 // Raw field_id_item.  字段类型
 typedef struct FieldId {
@@ -189,12 +189,13 @@ typedef struct AnnotationSetItem {
 } STAnnotationSetItem, *pSTAnnotationSetItem;
 ////////////////////////////////////////////////////////////////Annotations
 
-// class_def_item->class_data_off_ 这几个字段都是LEB128表示
+// class_def_item->class_data_off_ 这几个字段都是LEB128表示，
+// 没有leb128类型，使用时强转为Byte指针使用即可
 typedef struct ClassDataHeader {
-    uint32_t static_fields_size_;  // the number of static fields
-    uint32_t instance_fields_size_;  // the number of instance fields
-    uint32_t direct_methods_size_;  // the number of direct methods
-    uint32_t virtual_methods_size_;  // the number of virtual methods
+    uint32_t static_fields_size_;  // 你要这样使用就错了，用leb128类型顺序读取
+    uint32_t instance_fields_size_;  // 你要这样使用就错了，用leb128类型顺序读取
+    uint32_t direct_methods_size_;  // 你要这样使用就错了，用leb128类型顺序读取
+    uint32_t virtual_methods_size_;  // 你要这样使用就错了，用leb128类型顺序读取
   } STClassDataItem, *PSTClassDataItem;
 
 // Raw code_item.

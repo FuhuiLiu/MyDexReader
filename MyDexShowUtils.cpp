@@ -119,7 +119,7 @@ void MyDexShowUtils::showAllString()   //显示所有字符串
         printf("%d pStrLen[%X]-> %x ==>%s\r\n", i, 
             m_pDexObj->getStringLenFromIndex(i), //LEB实际数据大小
             m_pDexObj->getStringFillOffFromIndex(i), //文件偏移
-            m_pDexObj->getStringIdStringFromId(i));
+            m_pDexObj->getStringIdStringFromIndex(i));
     }
     MsgEnd("AllString");
 }
@@ -130,7 +130,7 @@ void MyDexShowUtils::showAllType()   //显示type字符串
     DWORD dwTypeItemSize = m_pDexObj->getTypeItemSize();
     for (DWORD i = 0; i < dwTypeItemSize; i++)
     {        
-        printf("%d ==>%s\r\n", i, m_pDexObj->getTypeIdStringFromId(i));
+        printf("%d ==>%s\r\n", i, m_pDexObj->getTypeIdStringFromIndex(i));
     }
     MsgEnd("AllType");
 }
@@ -141,14 +141,14 @@ void MyDexShowUtils::showAllProto()  //显示所有proto信息
     DWORD dwProtoItemSize = m_pDexObj->getProtoIdsSize();
     for (DWORD i = 0; i < dwProtoItemSize; i++)
     {
-		const char* pshorty_idx = m_pDexObj->getShortyIdxStringFromIndex(i);
-		const char* preturn_type_idx = m_pDexObj->getReturnTypeIdxStringFromIndex(i);
+		const char* pshorty_idx = m_pDexObj->getProtoIdsShortyIdxStringFromIndex(i);
+		const char* preturn_type_idx = m_pDexObj->getProtoIdsReturnTypeIdxStringFromIndex(i);
         printf("[%d]: shorty_idx: %s return_type_idx: %s ",
             i, pshorty_idx, preturn_type_idx);//
-        const char* pstr = m_pDexObj->getParametersStringFromIndex(i);
+        const char* pstr = m_pDexObj->getProtoIdsParametersStringFromIndex(i);
         printf("%s\r\n", pstr);
         delete[] (char*)pstr;
-        pstr = m_pDexObj->getProtoIdStringFromId(i);
+        pstr = m_pDexObj->getProtoIdStringFromIndex(i);
         printf("\tProtoIdString: %s\r\n", pstr);
         delete[] (char*)pstr;
     }
@@ -160,9 +160,9 @@ void MyDexShowUtils::showAllFields()  //显示所有fields信息
     MsgStart("AllFields");
 	for (DWORD i = 0; i < m_pDexObj->getFieldIdSizeFromSave(); i++)
 	{
-		const char* pClass = m_pDexObj->getFieldClassIdxStringFromId(i);
-		const char* pType = m_pDexObj->getFieldTypeIdxStringFromId(i);
-		const char* pName = m_pDexObj->getFieldNameIdxStringFromId(i);
+		const char* pClass = m_pDexObj->getFieldClassIdxStringFromIndex(i);
+		const char* pType = m_pDexObj->getFieldTypeIdxStringFromIndex(i);
+		const char* pName = m_pDexObj->getFieldNameIdxStringFromIndex(i);
 		printf("[%d]: class_idx: %s type_idx: %s name_idx: %s\r\n",
 			i, 
 			pClass, 
@@ -299,14 +299,21 @@ void MyDexShowUtils::showAllClasses()	//显示所有class信息
                 if (m_pDexObj->isClassDirectMethodsNeedShowDataOffStringFromIndex(i))
                 {
                     //CodeOff实际指向STCodeItem结构在文件中的偏移
-                    DWORD dwOff = m_pDexObj->getClassDirectMethodsCodeOffValueIndex(i, j);
-                    const char* p = m_pDexObj->getClassDirectMethodsDataOffStringFromIndex(dwOff);
+                     DWORD dwOff = m_pDexObj->getClassDirectMethodsCodeOffValueIndex(i, j);
+//                     const char* p = m_pDexObj->getClassDirectMethodsDataOffStringFromIndex(dwOff);
+					
+                    const char* p = m_pDexObj->getClassDirectMethodsDataOffStringFromIndex(i, j);
                     printf("\t\t\t\t%s\r\n", p);
                     delete[] (char *)p;
                     
-                    const char* pp = m_pDexObj->getClassDirectMethodsDataOffInsnsMachineCode((PSTCodeItem)(dwOff + m_pDexObj->getFileBeginAddr()));
-                    printf("\t\t\t\t\t%s\r\n", pp);
-                    delete[] (char *)pp;
+					//if (dwOff != 0)
+					if(m_pDexObj->isClassDirectMethodsNeedShowDataOffStringFromIndex(i))
+					{
+						//const char* pp = m_pDexObj->getClassDirectMethodsDataOffInsnsMachineCode((PSTCodeItem)dwOff);
+						const char* pp = m_pDexObj->getClassDirectMethodsDataOffInsnsMachineCode(i, j);
+						printf("\t\t\t\t\t%s\r\n", pp);
+						delete[] (char *)pp;
+					}
                 }
 			}
 		}
@@ -324,10 +331,20 @@ void MyDexShowUtils::showAllClasses()	//显示所有class信息
                 //如果virtual_methods_size结构下的code_off_有数据需要输出
                 if (m_pDexObj->isClassVirturlMethodsNeedShowDataOffStringFromIndex(i))
                 {
-                    DWORD dwOff = m_pDexObj->getClassVirtualMethodsCodeOffValueIndex(i, j);
+					//获取virtual_methods->{leb128 method_idx_diff; leb128 access_flags; leb128 code_off}
+					//结构中的code_off字段值，它即为STCodeitem结构的文件偏移
+                    DWORD dwOff = m_pDexObj->getClassVirtualMethodsCodeOffValueFromIndex(i, j);
                     const char* p = m_pDexObj->getClassVirtualMethodsDataOffStringFromIndex(dwOff);
                     printf("\t\t\t\t%s\r\n", p);
                     delete[] (char *)p;
+					
+					//off不为0才表示有数据输出
+					if (dwOff)
+					{
+						const char* pp = m_pDexObj->getClassVirtualMethodsDataOffInsnsMachineCode((PSTCodeItem)dwOff);
+						printf("\t\t\t\t\t%s\r\n", pp);
+						delete[] (char *)pp;
+					}
                 }
 			}
 		}

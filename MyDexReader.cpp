@@ -17,8 +17,8 @@ int main(int argc, char* argv[])
         //pST->showAllType();
         //pST->showAllProto();
 		//pST->showAllFields();
-		//pST->showAllMethods();
-		pST->showAllClasses();
+		pST->showAllMethods();
+		//pST->showAllClasses();
     }
 
 	return 0;
