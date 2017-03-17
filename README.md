@@ -1,1 +1,1 @@
-"# MyDexReader by VC++6.0" 
+# MyDexReader by VC++6.0
