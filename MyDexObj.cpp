@@ -3471,8 +3471,15 @@ bool CMyDexObj::isClassNeedShowVirtualMethodsStringFromIndex(uint nIndex)
 	uint32_t nSize = getClassClassDataVirtualMethodsSizeValueFromIndex(nIndex);
 	return nSize != 0;
 }
-//获取指定class_def_item->class_data_off_->virtual_methods_size字段的字符串,返回值需要手动释放
-const char* CMyDexObj::getClassVirtualMethodsStringFromIndex(uint nIndex, uint nFieldIndex)
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->
+                virtual_methods_size字段对应结构的字符串信息,返回值需要手动释放
+ * 函数参数: nIndex class_def_item数组下标
+                nFieldIndex field下标
+ * 函数返回值：virtual_methods_size字段值为0返回false,否则返回true
+ */
+///////////////////////////////////////////////////////////////////////////
+const char* CMyDexObj::getClassVirtualMethodsSTStringFromIndex(uint nIndex, uint nFieldIndex)
 {
 	char *result = new char[MAXBYTE * 4];
 	result[0] = '\0';
@@ -3484,19 +3491,27 @@ const char* CMyDexObj::getClassVirtualMethodsStringFromIndex(uint nIndex, uint n
 		return result;
 	}
 	//获取virtual_methods_size对应的结构首地址
-	BYTE *pByte = getClassVirtualMethodsAddrFromIndex(nIndex);
+	BYTE *pByte = getClassVirtualMethodsSTAddrFromIndex(nIndex);
+    //如果出错
+    if (!pByte)
+    {
+		return result;
+    }
 	//目标字段条件符合预期时进行遍历
 	for (uint i = 0; i < nvirtual_method_size; i++)
 	{
 		if (i == nFieldIndex)
 		{
+            //获取对应结构的access_flags字段
 			DWORD dwFlags = getClassVirtualMethodsAccessFlagsValueIndex(pByte);
 // 			sprintf(result, "[%d]method_idx_diff:%X access_flags:%X code_off:%X", 
 // 				i,
 // 				getClassVirtualMethodsFieldIdxDiffValueIndex(pByte),
 // 				dwFlags,
 // 				getClassVirtualMethodsCodeOffValueIndex(pByte));
+            //解析成字符串
 			const char* p = getClassAccessFlagsString(dwFlags);
+            //组合到结构
 			sprintf(result, "[%d]method_idx_diff:%X access_flags:%s code_off:%X", 
 				i,
 				getClassVirtualMethodsFieldIdxDiffValueIndex(pByte),
@@ -3510,23 +3525,51 @@ const char* CMyDexObj::getClassVirtualMethodsStringFromIndex(uint nIndex, uint n
 	}
 	return result;
 }
-//获取指定class_def_item->class_data_off_->virtual_methods_size->field_idx_diff字段值,这是一个LEB128数据
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取以pByte为地址的method_item结构的field_idx_diff字段值
+                class_def_item->class_data_off_->
+                virtual_methods_size->field_idx_diff字段值,这是一个LEB128数据
+ * 函数参数: pByte 指定目标地址
+ * 函数返回值：field_idx_diff字段值
+ */
+///////////////////////////////////////////////////////////////////////////
 DWORD CMyDexObj::getClassVirtualMethodsFieldIdxDiffValueIndex(BYTE *pByte)
 {
 	return getClassDirectMethodsMethodIdxDiffValueIndex(pByte);
 }
-//获取指定class_def_item->class_data_off_->virtual_methods_size->access_flags字段值,这是一个LEB128数据
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取以pByte为地址的method_item结构的access_flags字段值
+                class_def_item->class_data_off_->
+                virtual_methods_size->access_flags字段值,这是一个LEB128数据
+ * 函数参数: pByte 指定目标地址
+ * 函数返回值：access_flags字段值
+ */
+///////////////////////////////////////////////////////////////////////////
 DWORD CMyDexObj::getClassVirtualMethodsAccessFlagsValueIndex(BYTE *pByte)
 {
 	return getClassDirectMethodsAccessFlagsValueIndex(pByte);
 }
-//获取指定class_def_item->class_data_off_->virtual_methods_size->code_off字段值,这是一个LEB128数据
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取以pByte为地址的method_item结构的code_off字段值
+                class_def_item->class_data_off_->
+                virtual_methods_size->code_off字段值,这是一个LEB128数据
+ * 函数参数: pByte 指定目标地址
+ * 函数返回值：code_off字段值
+ */
+///////////////////////////////////////////////////////////////////////////
 DWORD CMyDexObj::getClassVirtualMethodsCodeOffValueIndex(BYTE *pByte)
 {
 	return getClassDirectMethodsCodeOffValueIndex(pByte);
 }
-//获取指定class_def_item[nIndex]->class_data_off_->virtual_methods_size[nVirtualIndex]->code_off字段值,
-//这是一个LEB128数据，指定CodeItem结构在文件中的偏移
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item[nIndex]->class_data_off_->
+                virtual_methods_size[nVirtualIndex]->code_off字段值,
+                这是一个LEB128数据，指定CodeItem结构在文件中的偏移
+ * 函数参数: nIndex class下标
+                nVirtualIndex virtual下标
+ * 函数返回值：code_off字段值
+ */
+///////////////////////////////////////////////////////////////////////////
 DWORD CMyDexObj::getClassVirtualMethodsCodeOffValueFromIndex(uint nIndex, uint nVirtualIndex)
 {
     //获取virtual_method_size_字段值，即其个数
@@ -3537,7 +3580,7 @@ DWORD CMyDexObj::getClassVirtualMethodsCodeOffValueFromIndex(uint nIndex, uint n
         return 0;
     }
     //获取virtual_methods_size对应的结构首地址,三个leb128数据分别表示methods_idx_diff,access_flags,code_off
-    BYTE *pByte = getClassVirtualMethodsAddrFromIndex(nIndex);
+    BYTE *pByte = getClassVirtualMethodsSTAddrFromIndex(nIndex);
     //目标字段条件符合预期时进行遍历
     for (uint i = 0; i < nvirtual_method_size; i++)
     {
@@ -3550,8 +3593,14 @@ DWORD CMyDexObj::getClassVirtualMethodsCodeOffValueFromIndex(uint nIndex, uint n
     }
 	return 0;
 }
-//获取指定class_def_item->class_data_off_->virtual_methods_size指向的数据地址,没有则返回空指针！！！
-BYTE* CMyDexObj::getClassVirtualMethodsAddrFromIndex(uint nIndex)
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->
+                virtual_methods_size指向的数据首地址,没有则返回空指针！！！
+ * 函数参数: nIndex class下标
+ * 函数返回值：virtual_methods_size指向的数据首地址或者空
+ */
+///////////////////////////////////////////////////////////////////////////
+BYTE* CMyDexObj::getClassVirtualMethodsSTAddrFromIndex(uint nIndex)
 {
 	//意外处理
 	uint nSize = getClassClassDataVirtualMethodsSizeValueFromIndex(nIndex);
@@ -3579,11 +3628,17 @@ BYTE* CMyDexObj::getClassVirtualMethodsAddrFromIndex(uint nIndex)
 	pByte = getNextSTAddr(pByte, nSize);
 	return pByte;
 }
-//获取指定class_def_item->class_data_off_->virtual_methods_size->data_off_是否需要输出
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->
+                virtual_methods_size->data_off_是否需要输出
+ * 函数参数: nIndex class下标
+ * 函数返回值：data_off不为空返回true,否则false
+ */
+///////////////////////////////////////////////////////////////////////////
 bool CMyDexObj::isClassVirturlMethodsNeedShowDataOffStringFromIndex(uint nIndex)
 {
     //获取指定下标下的class_def_item->class_data_off_->virtual_methods_size对应的首地址
-    BYTE *pByte = getClassVirtualMethodsAddrFromIndex(nIndex);
+    BYTE *pByte = getClassVirtualMethodsSTAddrFromIndex(nIndex);
     if(pByte == NULL)
         return false;
 
@@ -3591,11 +3646,18 @@ bool CMyDexObj::isClassVirturlMethodsNeedShowDataOffStringFromIndex(uint nIndex)
     DWORD dwOff = getClassVirtualMethodsCodeOffValueIndex(pByte);
     return dwOff != 0;
 }
-//获取指定class_def_item->class_data_off_->virtual_methods_size->data_off_指向结构首地址
-PSTCodeItem CMyDexObj::getClassVirtualMethodsDataOffSTFromeIndex(uint nIndex)
+//
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->
+                virtual_methods_size->data_off_指向的结构文件偏移首地址
+ * 函数参数: nIndex class下标
+ * 函数返回值：data_off_指向的结构文件偏移首地址或空
+ */
+///////////////////////////////////////////////////////////////////////////
+PSTCodeItem CMyDexObj::getClassVirtualMethodsDataOffSTFileOffsetFromeIndex(uint nIndex)
 {
     //获取指定下标下的class_def_item->class_data_off_->virtual_methods_size对应的首地址
-    PSTCodeItem pCI = (PSTCodeItem)getClassVirtualMethodsAddrFromIndex(nIndex); 
+    PSTCodeItem pCI = (PSTCodeItem)getClassVirtualMethodsSTAddrFromIndex(nIndex); 
     return pCI;
 }
 ///////////////////////////////////////////////////////////////////////////
@@ -3622,14 +3684,27 @@ const char* CMyDexObj::getClassVirtualMethodsDataOffStringFromIndex(DWORD dwOff)
         );
     return result;
 }
-//获取指定class_def_item指定virtual_methods下的data_off_字段指向的方法信息字符串，返回值需要手动释放delete[]   
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item指定virtual_methods下的data_off_字段指向的方法结构信息字符串，
+                返回值需要手动释放delete[]                 
+ * 函数参数: nIndex class数组下标
+                nVirtualMethodIndex methods下标
+ * 函数返回值：data_off_字段指向的方法结构信息字符串
+ */
+/////////////////////////////////////////////////////////////////////////// 
 const char* CMyDexObj::getClassVirtualMethodsDataOffStringFromIndex(uint nIndex, uint nVirtualMethodIndex)
 {
 	//读取对应类下的指定VirtualMethod结构下的code_off值，其即为CodeItem结构的文件偏移
 	DWORD dwOff = getClassVirtualMethodsCodeOffValueFromIndex(nIndex, nVirtualMethodIndex);
+    //getClassVirtualMethodsDataOffStringFromIndex内部处理有对dwOff非法时的处理
 	return getClassVirtualMethodsDataOffStringFromIndex(dwOff);
 }
-//获取data_off_结构下的register_size_字段值
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取data_off_结构下的register_size_字段值  
+ * 函数参数: dwOff codeitem结构的文件偏移
+ * 函数返回值：registers_size_字段值
+ */
+/////////////////////////////////////////////////////////////////////////// 
 uint16_t CMyDexObj::getClassVirtualMethodsDataOffRegisterSizeValueFromIndex(DWORD dwOff)
 {
 	//如果传入的参数为0，则返回0
@@ -3640,7 +3715,12 @@ uint16_t CMyDexObj::getClassVirtualMethodsDataOffRegisterSizeValueFromIndex(DWOR
     PSTCodeItem pCI = (PSTCodeItem)(dwOff + getFileBeginAddr());
     return pCI->registers_size_;
 }
-//获取data_off_结构下的ins_size_字段值
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取data_off_结构下的ins_size_字段值
+ * 函数参数: dwOff codeitem结构的文件偏移
+ * 函数返回值：ins_size_字段值
+ */
+/////////////////////////////////////////////////////////////////////////// 
 uint16_t CMyDexObj::getClassVirtualMethodsDataOffInsSizeValueFromIndex(DWORD dwOff)
 {
 	//如果传入的参数为0，则返回0
@@ -3651,7 +3731,12 @@ uint16_t CMyDexObj::getClassVirtualMethodsDataOffInsSizeValueFromIndex(DWORD dwO
     PSTCodeItem pCI = (PSTCodeItem)(dwOff + getFileBeginAddr());
     return pCI->ins_size_;
 }
-//获取data_off_结构下的out_size_字段值
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取data_off_结构下的out_size_字段值
+ * 函数参数: dwOff codeitem结构的文件偏移
+ * 函数返回值：out_size_字段值
+ */
+/////////////////////////////////////////////////////////////////////////// 
 uint16_t CMyDexObj::getClassVirtualMethodsDataOffOutsSizeValueFromIndex(DWORD dwOff)
 {
 	//如果传入的参数为0，则返回0
@@ -3662,7 +3747,12 @@ uint16_t CMyDexObj::getClassVirtualMethodsDataOffOutsSizeValueFromIndex(DWORD dw
     PSTCodeItem pCI = (PSTCodeItem)(dwOff + getFileBeginAddr());
     return pCI->outs_size_;
 }
-//获取data_off_结构下的tries_size_字段值
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取data_off_结构下的tries_size_字段值
+ * 函数参数: dwOff codeitem结构的文件偏移
+ * 函数返回值：tries_size_字段值
+ */
+/////////////////////////////////////////////////////////////////////////// 
 uint16_t CMyDexObj::getClassVirtualMethodsDataOffTriesSizeValueFromIndex(DWORD dwOff)
 {
 	//如果传入的参数为0，则返回0
@@ -3673,7 +3763,12 @@ uint16_t CMyDexObj::getClassVirtualMethodsDataOffTriesSizeValueFromIndex(DWORD d
     PSTCodeItem pCI = (PSTCodeItem)(dwOff + getFileBeginAddr());
     return pCI->tries_size_;
 }
-//获取data_off_结构下的debug_info_off_字段值
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取data_off_结构下的debug_info_off_字段值
+ * 函数参数: dwOff codeitem结构的文件偏移
+ * 函数返回值：debug_info_off_字段值
+ */
+/////////////////////////////////////////////////////////////////////////// 
 uint32_t CMyDexObj::getClassVirtualMethodsDataOffDebugInfoOffValueFromIndex(DWORD dwOff)
 {
 	//如果传入的参数为0，则返回0
@@ -3684,7 +3779,12 @@ uint32_t CMyDexObj::getClassVirtualMethodsDataOffDebugInfoOffValueFromIndex(DWOR
     PSTCodeItem pCI = (PSTCodeItem)(dwOff + getFileBeginAddr());
     return pCI->debug_info_off_;
 }
-//获取data_off_结构下的insns数据大小，实际是WORD的个数
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取data_off_结构下的insns数据大小，实际是WORD的个数
+ * 函数参数: dwOff codeitem结构的文件偏移
+ * 函数返回值：insns数据大小，实际是WORD的个数
+ */
+/////////////////////////////////////////////////////////////////////////// 
 uint32_t CMyDexObj::getClassVirtualMethodsDataOffInsnsSizeInCodeUnitsValueFromIndex(DWORD dwOff)
 {
 	//如果传入的参数为0，则返回0
@@ -3695,7 +3795,12 @@ uint32_t CMyDexObj::getClassVirtualMethodsDataOffInsnsSizeInCodeUnitsValueFromIn
     PSTCodeItem pCI = (PSTCodeItem)(dwOff + getFileBeginAddr());
     return pCI->insns_size_in_code_units_;
 }
-//获取data_off_结构下的insns数据起始地址
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取data_off_结构下的insns数据文件偏移地址
+ * 函数参数: dwOff codeitem结构的文件偏移
+ * 函数返回值：insns数据起始地址
+ */
+///////////////////////////////////////////////////////////////////////////
 WORD* CMyDexObj::getClassVirtualMethodsDataOffInsnsFileOffsetFromIndex(DWORD dwOff)
 {
 	//如果传入的参数为0，则返回0
@@ -3708,8 +3813,12 @@ WORD* CMyDexObj::getClassVirtualMethodsDataOffInsnsFileOffsetFromIndex(DWORD dwO
 	DWORD dwFile = getFileBeginAddr();
     return (WORD*)(dwAdd - dwFile);
 }
-//获取ClassVirtualMethodsDataOffInsns下的机器码，返回值手动释放
-//pSTCI 文件偏移指针
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取ClassVirtualMethodsDataOffInsns下的机器码，返回值手动释放
+ * 函数参数: pSTCI 文件偏移指针
+ * 函数返回值：Insns下的机器码
+ */
+///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getClassVirtualMethodsDataOffInsnsMachineCode(PSTCodeItem pSTCI)
 {
     return getClassDirectMethodsDataOffInsnsMachineCode(pSTCI);

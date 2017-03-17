@@ -13,11 +13,11 @@ int main(int argc, char* argv[])
     bool bRet = pST->init(argv[1]);
     if (bRet)
     {
-        //pST->showAllString();
-        //pST->showAllType();
-        //pST->showAllProto();
-		//pST->showAllFields();
-		//pST->showAllMethods();
+        pST->showAllString();
+        pST->showAllType();
+        pST->showAllProto();
+		pST->showAllFields();
+		pST->showAllMethods();
 		pST->showAllClasses();
     }
     else

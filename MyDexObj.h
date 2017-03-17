@@ -309,26 +309,29 @@ public:
 	
 	//指定class_def_item->class_data_off_->virtual_methods_size字段值是否为0
 	bool isClassNeedShowVirtualMethodsStringFromIndex(uint nIndex);
-	//获取指定class_def_item->class_data_off_->virtual_methods_size字段的字符串,返回值需要手动释放
-	const char* getClassVirtualMethodsStringFromIndex(uint nIndex, uint nVirtualMethodIndex);
-	//获取指定class_def_item->class_data_off_->virtual_methods_size->field_idx_diff字段值,这是一个LEB128数据
+	//获取指定class_def_item->class_data_off_->virtual_methods_size字段
+    //指向的结构字符串信息,返回值需要手动释放
+	const char* getClassVirtualMethodsSTStringFromIndex(uint nIndex, uint nVirtualMethodIndex);
+	//获取以pByte为地址的method_item结构的field_idx_diff字段值
 	DWORD getClassVirtualMethodsFieldIdxDiffValueIndex(BYTE *pByte);
-	//获取指定class_def_item->class_data_off_->virtual_methods_size->access_flags字段值,这是一个LEB128数据
+	//获取以pByte为地址的method_item结构的access_flags字段值
 	DWORD getClassVirtualMethodsAccessFlagsValueIndex(BYTE *pByte);
-	//获取指定class_def_item->class_data_off_->virtual_methods_size->code_off字段值,这是一个LEB128数据
+	//获取以pByte为地址的method_item结构的code_off字段值
     DWORD getClassVirtualMethodsCodeOffValueIndex(BYTE *pByte);
-    //获取指定class_def_item->class_data_off_->virtual_methods_size->code_off字段值,这是一个LEB128数据
+    //获取指定class_def_item[nIndex]->class_data_off_->
+    //            virtual_methods_size[nVirtualIndex]->code_off字段值,
 	DWORD getClassVirtualMethodsCodeOffValueFromIndex(uint nIndex, uint nItemIndex);
-	//获取指定class_def_item->class_data_off_->virtual_methods_size指向的数据地址,没有则返回空指针！！！
-    BYTE* getClassVirtualMethodsAddrFromIndex(uint nIndex);
+	//获取指定class_def_item->class_data_off_->virtual_methods_size指向的数据首地址,没有则返回空指针！！！
+    BYTE* getClassVirtualMethodsSTAddrFromIndex(uint nIndex);
     //获取指定class_def_item->class_data_off_->virtual_methods_size->data_off_是否需要输出
     bool isClassVirturlMethodsNeedShowDataOffStringFromIndex(uint nIndex);
     //获取指定data_off_字段指向的方法信息字符串，返回值需要手动释放delete[]   
     const char* getClassVirtualMethodsDataOffStringFromIndex(DWORD dwOff);
     //获取指定class_def_item指定virtual_methods下的data_off_字段指向的方法信息字符串，返回值需要手动释放delete[]   
     const char* getClassVirtualMethodsDataOffStringFromIndex(uint nIndex, uint nVirtualMethodIndex);
-    //获取指定class_def_item->class_data_off_->virtual_methods_size->data_off_指向结构首地址
-    PSTCodeItem getClassVirtualMethodsDataOffSTFromeIndex(uint nIndex);
+    //获取指定class_def_item->class_data_off_->
+    //            virtual_methods_size->data_off_指向的结构于文件偏移首地址
+    PSTCodeItem getClassVirtualMethodsDataOffSTFileOffsetFromeIndex(uint nIndex);
     //获取data_off_结构下的register_size_字段值
     uint16_t getClassVirtualMethodsDataOffRegisterSizeValueFromIndex(DWORD dwOff);
     //获取data_off_结构下的ins_size_字段值

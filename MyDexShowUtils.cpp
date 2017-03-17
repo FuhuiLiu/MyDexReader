@@ -329,7 +329,7 @@ void MyDexShowUtils::showAllClasses()	//显示所有class信息
 			printf("\t\tvirtual_methods_size_[%d]\r\n", nSize);
 			for (uint j = 0; j < nSize; j++)
 			{
-				const char* p = m_pDexObj->getClassVirtualMethodsStringFromIndex(i, j);
+				const char* p = m_pDexObj->getClassVirtualMethodsSTStringFromIndex(i, j);
 				printf("\t\t\t%s\r\n", p);
                 delete[] (char *)p;
 
