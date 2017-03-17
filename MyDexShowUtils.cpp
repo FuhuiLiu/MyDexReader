@@ -181,7 +181,7 @@ void MyDexShowUtils::showAllFields()  //显示所有fields信息
 void MyDexShowUtils::showAllMethods() 
 {
     MsgStart("AllMethods");
-	for (DWORD i = 0; i < m_pDexObj->getMethodIdSizeFromSave(); i++)
+	for (DWORD i = 0; i < m_pDexObj->getMethodIdsSizeFromSave(); i++)
 	{
 //         printf("[%d]: class_idx: %X proto_idx_: %X name_idx: %X\r\n",
 //             i, m_pDexObj->getMethodClassIdxValueFromIndex(i), 

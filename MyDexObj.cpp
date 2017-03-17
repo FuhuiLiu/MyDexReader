@@ -526,6 +526,7 @@ DWORD CMyDexObj::getStringLenFromIndex(uint nIndex)
     ASSERT(nIndex < m_nStringIdItemSize && nIndex >= 0);
     //从stringids数组读出下标的string_data_off字段值
     BYTE *pByte = getStringIdsStringDataOffSTFromIndex(nIndex);
+    //这个判断合理？正常情况下字符串起始地址不会在文件首地址，算合理
     if (!pByte)
     {
         return 0;
@@ -727,7 +728,7 @@ const char* CMyDexObj::getProtoIdsParametersStringFromIndex(uint nProtoIdsIndex)
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
-DWORD CMyDexObj::getProtoIdsShortyIdxValueFromIndex(uint nProtoIdsIndex)
+uint32_t CMyDexObj::getProtoIdsShortyIdxValueFromIndex(uint nProtoIdsIndex)
 {
     //取出proto结构下标数据
     STProtoIdItem *pST = NULL;
@@ -745,7 +746,7 @@ DWORD CMyDexObj::getProtoIdsShortyIdxValueFromIndex(uint nProtoIdsIndex)
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
-DWORD CMyDexObj::getProtoIdsReturnTypeIdxValueFromIndex(uint nProtoIdsIndex)
+uint16_t CMyDexObj::getProtoIdsReturnTypeIdxValueFromIndex(uint nProtoIdsIndex)
 {
     //取出proto结构下标数据
     STProtoIdItem *pST = NULL;
@@ -793,7 +794,7 @@ STProtoIdItem* CMyDexObj::getProtoIdsSTFromIndex(uint nProtoIdsIndex)
  * 函数返回值：参数列表字段值
  */
 ///////////////////////////////////////////////////////////////////////////
-DWORD CMyDexObj::getProtoIdsParametersOffValueFromIndex(uint nIndex)
+uint32_t CMyDexObj::getProtoIdsParametersOffValueFromIndex(uint nIndex)
 {
     STProtoIdItem* pST = getProtoIdsSTFromIndex(nIndex);
     if(pST != NULL)
@@ -920,7 +921,7 @@ STFieldIdItem* CMyDexObj::getFieldIdSTFromIndex(uint nIndex)
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：从MethodId结构中拿指定下标的field_id_item结构的class_idx_字段值
- * 函数参数: 
+ * 函数参数: nIndex method_ids数组下标
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
@@ -929,13 +930,14 @@ uint16_t CMyDexObj::getFieldIdsClassIdxValueFromIndex(uint nIndex)
 	PSTFieldIdItem pST = getFieldIdSTFromIndex(nIndex);
     if (!pST)
     {
-        return 0;
+        //return 0;
+        return U16ERROR;
     }
 	return pST->class_idx_;
 }
 ///////////////////////////////////////////////////////////////////////////
-/* 函数功能：从MethodId结构中拿指定下标的field_id_item结构的proto_idx_字段值
- * 函数参数: 
+/* 函数功能：从field_ids结构中拿指定下标的field_id_item结构的proto_idx_字段值
+ * 函数参数: nIndex field_ids数组下标
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
@@ -944,13 +946,14 @@ uint16_t CMyDexObj::getFieldIdsTypeIdxValueFromIndex(uint nIndex)
     PSTFieldIdItem pST = getFieldIdSTFromIndex(nIndex);
     if (!pST)
     {
-        return 0;
+        //return 0;
+        return U16ERROR;
     }
 	return pST->type_idx_;
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：从FieldId结构中拿指定下标的field_id_item结构的name_idx_字段值
- * 函数参数: 
+ * 函数参数: nIndex field_ids数据下标
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
@@ -959,7 +962,8 @@ uint32_t CMyDexObj::getFieldIdsNameIdxValueFromIndex(uint nIndex)
     PSTFieldIdItem pST = getFieldIdSTFromIndex(nIndex);
     if (!pST)
     {
-        return 0;
+        //return 0;
+        return U32ERROR;
     }
 	return pST->name_idx_;
 }
@@ -1028,8 +1032,14 @@ DWORD CMyDexObj::getFieldIdSizeFromSave()
 const char* CMyDexObj::getFieldTypeIdxStringFromIndex(uint nIndex)
 {
 	//获取type_idx_字段值,这个字段即为type_ids_字符串数组下标
-	//m_pDexObj->getTypeIdStringFromId(m_pDexObj->getProto_Idx_FromId(i)), 
-	return getTypeIdStringFromIndex(getFieldIdsTypeIdxValueFromIndex(nIndex));
+    //m_pDexObj->getTypeIdStringFromId(m_pDexObj->getProto_Idx_FromId(i)), 
+    uint16_t value = getFieldIdsTypeIdxValueFromIndex(nIndex);
+    if (value == U16ERROR)
+    {
+        //这样好像不大好
+        return "getFieldIdsTypeIdxValueFromIndex ret -1";
+    }
+	return getTypeIdStringFromIndex(value);
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：拿field_id_item数组指定下标的class_idx_表示的字符串
@@ -1041,7 +1051,13 @@ const char* CMyDexObj::getFieldClassIdxStringFromIndex(uint nIndex)
 {
 	//获取class_idx_字段值，这个字段即为type_ids_字符串数组下标
 	//m_pDexObj->getTypeIdStringFromId(m_pDexObj->getClass_Idx_FromId(i)), 
-	return getTypeIdStringFromIndex(getFieldIdsClassIdxValueFromIndex(nIndex));
+    uint16_t value = getFieldIdsClassIdxValueFromIndex(nIndex);
+    if (value == U16ERROR)
+    {
+        //这样好像不大好
+        return "getFieldIdsClassIdxValueFromIndex ret -1";
+    }
+	return getTypeIdStringFromIndex(value);
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：拿field_id_item数组指定下标的name_idx_表示的字符串
@@ -1052,12 +1068,17 @@ const char* CMyDexObj::getFieldClassIdxStringFromIndex(uint nIndex)
 const char* CMyDexObj::getFieldNameIdxStringFromIndex(uint nIndex)
 {
 	//获取name_idx_字段值,这个字段即为type_ids_字符串数组下标
-	//m_pDexObj->getStringIdStringFromId(m_pDexObj->getName_Idx_FromId(i))
-	return getStringIdStringFromIndex(getFieldIdsNameIdxValueFromIndex(nIndex));
+    //m_pDexObj->getStringIdStringFromId(m_pDexObj->getName_Idx_FromId(i))
+    uint16_t value = getFieldIdsNameIdxValueFromIndex(nIndex);
+    if (value == U32ERROR)
+    {
+        //这样好像不大好
+        return "getFieldIdsNameIdxValueFromIndex ret -1";
+    }
+	return getStringIdStringFromIndex(value);
 }
-
 ///////////////////////////////////////////////////////////////////////////
-/* 函数功能：初始化method_id_item必要结构
+/* 函数功能：初始化解析method_id_item必要结构
  * 函数参数: 
  * 函数返回值：
  */
@@ -1080,7 +1101,7 @@ bool CMyDexObj::initMethodIdItemST()
 bool CMyDexObj::ColletionMethodIdItem()     //收集method_id_item表
 {
     STMethodIdItem *pST = NULL;
-    for (DWORD i = 0; i < getMethodIdSizeFromSave(); i++)
+    for (DWORD i = 0; i < getMethodIdsSizeFromSave(); i++)
     {
         //获取该下标类型的地址
         pST = getMethodIdSTFromIndex(i);
@@ -1103,48 +1124,60 @@ bool CMyDexObj::ColletionMethodIdItem()     //收集method_id_item表
     }
     return true;
 }
-STMethodIdItem* CMyDexObj::getMethodIdSTFromIndex(uint nIndex)   //拿method_id_list指定下标的结构首地址
+    /*
+		拿method_id_list数组指定下标的结构首地址
+	*/
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：拿method_id_list指定下标的结构首地址
+    { uint16_t class_idx_; 
+      uint16_t proto_idx_;
+      uint32_t name_idx_;}
+ * 函数参数: nIndex 目标method_idx下标
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+STMethodIdItem* CMyDexObj::getMethodIdSTFromIndex(uint nIndex)
 {
     ASSERT(m_pMethodIdItem != NULL);
-    ASSERT(getMethodIdSizeFromSave() > nIndex && nIndex >= 0);
+    ASSERT(getMethodIdsSizeFromSave() > nIndex && nIndex >= 0);
     return &m_pMethodIdItem[nIndex];
 }
 ///////////////////////////////////////////////////////////////////////////
-/* 函数功能：获取FieldIdSize个数
+/* 函数功能：获取FieldIdsSize个数
  * 函数参数: 
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
-DWORD CMyDexObj::getMethodIdSizeFromSave()
+DWORD CMyDexObj::getMethodIdsSizeFromSave()
 {
     ASSERT(m_nMethodIdItemSize != 0);
     return m_nMethodIdItemSize;
 }
 ///////////////////////////////////////////////////////////////////////////
-/* 函数功能：显示方法字符串
- * 函数参数: 
+/* 函数功能：显示指定方法下标的字符串，形式为“类名.方法名”
+ * 函数参数: nIndex 指定方法下标
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
 void CMyDexObj::showMethodStringAt(uint nIndex)
 {
     ASSERT(m_pMethodIdItem != NULL);
-    ASSERT(getMethodIdSizeFromSave() > nIndex && nIndex >= 0);
+    ASSERT(getMethodIdsSizeFromSave() > nIndex && nIndex >= 0);
     STMethodIdItem *pSTMI = &m_pMethodIdItem[nIndex];
     getProtoIdsProtoStringFromIndex(pSTMI->proto_idx_);
     printf(" %s.%s\r\n",
         getTypeIdStringFromIndex(pSTMI->class_idx_), 
         getStringIdStringFromIndex(pSTMI->name_idx_));
 }
-
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：拿method_id_item数组指定下标方法的类字符串
- * 函数参数: 
+ * 函数参数: nIndex 指定method_id_item数组下标
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getMethodClassIdxStringFromIndex(uint nIndex)
 {
+    //拿method_id_item数组指定下标的class_idx_字段值，其实际为字符串在type_ids的下标
 	return getTypeIdStringFromIndex(getMethodClassIdxValueFromIndex(nIndex));
 }
 ///////////////////////////////////////////////////////////////////////////
@@ -1155,6 +1188,7 @@ const char* CMyDexObj::getMethodClassIdxStringFromIndex(uint nIndex)
 ///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getMethodProtoIdxStringFromIndex(uint nIndex)
 {
+    //拿method_id_item数组指定下标的class_idx_字段值，其实际为字符串在proto_ids的下标
 	return getProtoIdsProtoStringFromIndex(getMethodProtoIdxValueFromIndex(nIndex));
 }
 ///////////////////////////////////////////////////////////////////////////
@@ -1165,39 +1199,52 @@ const char* CMyDexObj::getMethodProtoIdxStringFromIndex(uint nIndex)
 ///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getMethodNameIdxStringFromIndex(uint nIndex)
 {
+    //拿method_id_item数组指定下标的class_idx_字段值，其实际为字符串在string_ids的下标
 	return getStringIdStringFromIndex(getMethodNameIdxValueFromIndex(nIndex));
 }
 ///////////////////////////////////////////////////////////////////////////
-/* 函数功能：拿method_id_item数组指定下标的class_idx_字段值
- * 函数参数: 
+/* 函数功能：拿method_id_item数组指定下标的class_idx_字段值，其实际为字符串在type_ids的下标
+ * 函数参数: nIndex method_id_item数组下标
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
 uint16_t CMyDexObj::getMethodClassIdxValueFromIndex(uint nIndex)
 {
     STMethodIdItem *pST = getMethodIdSTFromIndex(nIndex);
+    if (!pST)
+    {
+        return 0;
+    }
 	return pST->class_idx_;
 }
 ///////////////////////////////////////////////////////////////////////////
-/* 函数功能：拿method_id_item数组指定下标的proto_idx_字段值
- * 函数参数: 
+/* 函数功能：拿method_id_item数组指定下标的proto_idx_字段值，其实际为字符串在proto_ids的下标
+ * 函数参数: nIndex method_id_item数组下标
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
 uint16_t CMyDexObj::getMethodProtoIdxValueFromIndex(uint nIndex)
 {
     STMethodIdItem *pST = getMethodIdSTFromIndex(nIndex);
+    if (!pST)
+    {
+        return 0;
+    }
 	return pST->proto_idx_;
 }
 ///////////////////////////////////////////////////////////////////////////
-/* 函数功能：拿method_id_item数组指定下标的name_idx_字段值
- * 函数参数: 
+/* 函数功能：拿method_id_item数组指定下标的name_idx_字段值，其实际为字符串在string_ids的下标
+ * 函数参数: nIndex method_id_item数组下标
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getMethodNameIdxValueFromIndex(uint nIndex)
 {
     STMethodIdItem *pST = getMethodIdSTFromIndex(nIndex);
+    if (!pST)
+    {
+        return 0;
+    }
 	return pST->name_idx_;
 }
 ///////////////////////////////////////////////////////////////////////////
@@ -1812,7 +1859,7 @@ bool CMyDexObj::ColletionClassDefItem()
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
-STClassDefItem* CMyDexObj::getClassDefSTFromId(uint nIndex)
+PSTClassDefItem CMyDexObj::getClassDefSTFromId(uint nIndex)
 {
     ASSERT(m_pClassDefItem != NULL);
     ASSERT(getClassDefSizeFromSave() > nIndex && nIndex >= 0);
@@ -1832,127 +1879,174 @@ DWORD CMyDexObj::getClassDefSizeFromSave()
 
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取class_def_item下标结构中的class_idx_字段值	
- * 函数参数: 
- * 函数返回值：
+ * 函数参数: nIndex 目标class_def_item数组下标
+ * 函数返回值：实际字段值或者U16ERROR
  */
 ///////////////////////////////////////////////////////////////////////////
 uint16_t CMyDexObj::getClassClassIdxValueFromIndex(uint nIndex)
 {
 	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    if (!pCD)
+    {
+        return U16ERROR;
+    }
 	return pCD->class_idx_;
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取class_def_item下标结构中的pad1_字段值	
- * 函数参数: 
- * 函数返回值：
+ * 函数参数: nIndex 目标class_def_item数组下标
+ * 函数返回值：实际字段值或者U16ERROR
  */
 ///////////////////////////////////////////////////////////////////////////
 uint16_t CMyDexObj::getClassPad1ValueFromIndex(uint nIndex)
 {
-	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    if (!pCD)
+    {
+        return U16ERROR;
+    }
 	return pCD->pad1_;
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取class_def_item下标结构中的access_flags_字段值
- * 函数参数: 
- * 函数返回值：
+ * 函数参数: nIndex 目标class_def_item数组下标
+ * 函数返回值：实际字段值或者U32ERROR
  */
 ///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassAccessFlagsValueFromIndex(uint nIndex)
 {
-	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    if (!pCD)
+    {
+        return U32ERROR;
+    }
 	return pCD->access_flags_;
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取class_def_item下标结构中的superclass_idx_字段值
- * 函数参数: 
- * 函数返回值：
+ * 函数参数: nIndex 目标class_def_item数组下标
+ * 函数返回值：实际字段值或者U16ERROR
  */
 ///////////////////////////////////////////////////////////////////////////
 uint16_t CMyDexObj::getClassSuperclassIdxValueFromIndex(uint nIndex)
 {
-	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    if (!pCD)
+    {
+        return U16ERROR;
+    }
 	return pCD->superclass_idx_;
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取class_def_item下标结构中的pad2_字段值	
- * 函数参数: 
- * 函数返回值：
+ * 函数参数: nIndex 目标class_def_item数组下标
+ * 函数返回值：实际字段值或者U16ERROR
  */
 ///////////////////////////////////////////////////////////////////////////
 uint16_t CMyDexObj::getClassPad2ValueFromIndex(uint nIndex)
 {
-	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    if (!pCD)
+    {
+        return U16ERROR;
+    }
 	return pCD->pad2_;
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取class_def_item下标结构中的interfaces_off字段值
- * 函数参数: 
- * 函数返回值：
+ * 函数参数: nIndex 目标class_def_item数组下标
+ * 函数返回值：实际字段值或者U32ERROR
  */
 ///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassInterfaceOffValueFromIndex(uint nIndex)
 {
-	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    if (!pCD)
+    {
+        return U32ERROR;
+    }
 	return pCD->interfaces_off_;
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取class_def_item下标结构中的source_file_idx_字段值
- * 函数参数: 
- * 函数返回值：
+ * 函数参数: nIndex 目标class_def_item数组下标
+ * 函数返回值：实际字段值或者U32ERROR
  */
 ///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassSourceFileIdxValueFromIndex(uint nIndex)
 {
-	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    if (!pCD)
+    {
+        return U32ERROR;
+    }
 	return pCD->source_file_idx_;
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取class_def_item下标结构中的annotations_off_字段值
- * 函数参数: 
- * 函数返回值：
+ * 函数参数: nIndex 目标class_def_item数组下标
+ * 函数返回值：实际字段值或者U32ERROR
  */
 ///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassAnnotationsOffValueFromIndex(uint nIndex)
 {
-	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    if (!pCD)
+    {
+        return U32ERROR;
+    }
 	return pCD->annotations_off_;
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取class_def_item下标结构中的class_data_off_字段值
- * 函数参数: 
- * 函数返回值：
+ * 函数参数: nIndex 目标class_def_item数组下标
+ * 函数返回值：实际字段值或者U32ERROR
  */
 ///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassClassDataOffValueFromIndex(uint nIndex)
 {
-	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    if (!pCD)
+    {
+        return U32ERROR;
+    }
 	return pCD->class_data_off_;
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取class_def_item下标结构中的static_values_off_字段值
- * 函数参数: 
- * 函数返回值：
+ * 函数参数: nIndex 目标class_def_item数组下标
+ * 函数返回值：实际字段值或者U32ERROR
  */
 ///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassStaticValuesOffValueFromIndex(uint nIndex)
 {
-	PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    if (!pCD)
+    {
+        return U32ERROR;
+    }
 	return pCD->static_values_off_;
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取指定下标的ClassDef结构中的class_idx_的字符串
- * 函数参数: 
+ * 函数参数: nIndex 目标class_def_item数组下标
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getClassClassIdxStringFromIndex(uint nIndex)
 {
-	return getTypeIdStringFromIndex(getClassClassIdxValueFromIndex(nIndex));
+    //取对应class_def_item数组下的ClassDef结构的class_idx_字段值
+    uint16_t value = getClassClassIdxValueFromIndex(nIndex);
+    //这个下标值为type_ids_数组下标，可能为0，所以只规避错误返回U16ERROR
+    if (value == U16ERROR) //value == 0 || 
+    {
+        return "getClassClassIdxValueFromIndex ret -1";
+    }
+	return getTypeIdStringFromIndex((uint32_t)value);
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取指定下标的ClassDef结构中的access_flags_表示的字符串,返回值需要手动做数组释放
- * 函数参数: 
+ * 函数参数: nIndex 目标class_def_item数组下标
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
@@ -1963,8 +2057,8 @@ const char* CMyDexObj::getClassAccessFlagsStringFromIndex(uint nIndex)
 	result[0] = '\0';
 	char temp[MAXBYTE];
 
-	//若flags为0则返回0
-	if(dwFlags == 0)
+	//若flags为0或错误的-1则返回0
+	if(dwFlags == 0 || dwFlags == U32ERROR)
 	{
 		result[0] = 0x30;
 		result[1] = '\0';
@@ -2239,7 +2333,14 @@ const char* CMyDexObj::getClassAccessFlagsString(DWORD dwFlags)
 ///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getClassSuperClassIdxStringFromIndex(uint nIndex)
 {
-	return getTypeIdStringFromIndex(getClassSuperclassIdxValueFromIndex(nIndex));
+    //获取class_def结构superclass_idx字段值，其为父类路径字符串在type_ids数组的下标
+    uint16_t value = getClassSuperclassIdxValueFromIndex(nIndex);
+    //如果出错
+    if (value == U16ERROR)
+    {
+        return "getClassSuperclassIdxValueFromIndex ret -1";
+    }
+	return getTypeIdStringFromIndex(value);
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取指定下标的ClassDef结构中的source_file_idx_的字符串
@@ -2249,21 +2350,30 @@ const char* CMyDexObj::getClassSuperClassIdxStringFromIndex(uint nIndex)
 ///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getClassSourceFileIdxStringFromIndex(uint nIndex)
 {
-	return getStringIdStringFromIndex(getClassSourceFileIdxValueFromIndex(nIndex));
+    //获取class_def结构source_file_idx字段值，其为源文件字符串在string_ids数组的下标
+    uint32_t value = getClassSourceFileIdxValueFromIndex(nIndex);
+    if (value == U32ERROR)
+    {
+        return "getClassSourceFileIdxValueFromIndex ret -1";
+    }
+	return getStringIdStringFromIndex(value);
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：根据相应Class结构中的class_annotations_off_判断是否需要输出相关信息
- * 函数参数: 
+ * 函数参数: nIndex 相应class的下标
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
 bool CMyDexObj::isClassNeedShowAnnotationsString(uint nIndex)
 {
-    return getClassAnnotationsOffValueFromIndex(nIndex) != 0;
+    //读取相应Class结构中的class_annotations_off_字段值，
+    //返回值不为空或-1表示有数据输出
+    return getClassAnnotationsOffValueFromIndex(nIndex) != 0 && 
+        getClassAnnotationsOffValueFromIndex(nIndex) != U32ERROR;
 }
 ///////////////////////////////////////////////////////////////////////////
-/* 函数功能：获取相应Class结构中的class_annotations_off_结构数据,返回值需要手动释放
- * 函数参数: 
+/* 函数功能：获取相应Class结构中的class_annotations_off_结构数据字符串,返回值需要手动释放
+ * 函数参数: nIndex 相应class的下标
  * 函数返回值：
  */
 ///////////////////////////////////////////////////////////////////////////
@@ -2279,85 +2389,143 @@ const char* CMyDexObj::getClassAnnotationStringFromIndex(uint nIndex)
         getClassAnnotationsParametersSizeValueFromIndex(nIndex));
     return result;
 }
-//获取指定下标的STAnnotationsDirectoryItem结构指针
-PSTAnnotationsDirectoryItem CMyDexObj::getClassAnnotationsDirectoryItemSTFromIndex(uint nIndex)
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item结构下标的STAnnotationsDirectoryItem结构文件偏移指针
+ * 函数参数: nIndex 相应class的下标
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+PSTAnnotationsDirectoryItem CMyDexObj::
+    getClassAnnotationsDirectoryItemSTFileOffsetFromIndex(uint nIndex)
 {
     //获取对应AnnotationsOff字段值
     DWORD dwOff = getClassAnnotationsOffValueFromIndex(nIndex);
-	//异常时的处理，指定下标结构的dwOff为空
-	if (!dwOff)
+	//异常时的处理，指定下标结构的dwOff为空或返回错误
+	if (!dwOff || dwOff == U32ERROR)
 	{
 		return NULL;
 	}
 
     //这个字段值即为结构在文件的偏移，加上文件起始地址即为这个结构的指针
     PSTAnnotationsDirectoryItem pAnnotationsDirectoryItem = 
-        (PSTAnnotationsDirectoryItem)(dwOff + getFileBeginAddr());
+        (PSTAnnotationsDirectoryItem)(dwOff/* + getFileBeginAddr()*/);
     return pAnnotationsDirectoryItem;
 }
-//获取相应Class结构中的class_annotations_off_结构中class_annotations_off_字段值
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取相应Class结构中的class_annotations_off_结构中class_annotations_off_字段值
+ * 函数参数: nIndex 相应class的下标
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassAnnotationsClassAnnotationsOffValueFromIndex(uint nIndex)
 {
+    //获取对应class_def_item下的annotations_off字段值，其为该结构在文件的偏移
     PSTAnnotationsDirectoryItem pAnnotationsDirectoryItem = 
-        getClassAnnotationsDirectoryItemSTFromIndex(nIndex);
+        getClassAnnotationsDirectoryItemSTFileOffsetFromIndex(nIndex);
 	//如果pAnnotationsDirectoryItem无效则返回0
 	if (!pAnnotationsDirectoryItem)
 	{
 		return 0;
 	}
+    //加上首地址
+    pAnnotationsDirectoryItem = (PSTAnnotationsDirectoryItem)
+        ((DWORD)pAnnotationsDirectoryItem + getFileBeginAddr());
     return pAnnotationsDirectoryItem->class_annotations_off_;
 }
-//获取相应Class结构中的class_annotations_off_结构中fields_size_字段值
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取相应Class结构中的class_annotations_off_结构中fields_size_字段值
+ * 函数参数: nIndex 相应class的下标
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassAnnotationsFieldsSizeValueFromIndex(uint nIndex)
 {
+    //获取对应class_def_item下的annotations_off字段值，其为该结构在文件的偏移
     PSTAnnotationsDirectoryItem pAnnotationsDirectoryItem = 
-        getClassAnnotationsDirectoryItemSTFromIndex(nIndex);
+        getClassAnnotationsDirectoryItemSTFileOffsetFromIndex(nIndex);
 	//如果pAnnotationsDirectoryItem无效则返回0
 	if (!pAnnotationsDirectoryItem)
 	{
 		return 0;
-	}
+    }
+    //加上首地址
+    pAnnotationsDirectoryItem = (PSTAnnotationsDirectoryItem)
+        ((DWORD)pAnnotationsDirectoryItem + getFileBeginAddr());
     return pAnnotationsDirectoryItem->fields_size_;
 }
-//获取相应Class结构中的class_annotations_off_结构中methods_size_字段值
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取相应Class结构中的class_annotations_off_结构中methods_size_字段值
+ * 函数参数: nIndex 相应class的下标
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassAnnotationsMethodsSizeValueFromIndex(uint nIndex)
 {
+    //获取对应class_def_item下的annotations_off字段值，其为该结构在文件的偏移
     PSTAnnotationsDirectoryItem pAnnotationsDirectoryItem = 
-        getClassAnnotationsDirectoryItemSTFromIndex(nIndex);
+        getClassAnnotationsDirectoryItemSTFileOffsetFromIndex(nIndex);
 	//如果pAnnotationsDirectoryItem无效则返回0
 	if (!pAnnotationsDirectoryItem)
 	{
 		return 0;
-	}
+    }
+    //加上首地址
+    pAnnotationsDirectoryItem = (PSTAnnotationsDirectoryItem)
+        ((DWORD)pAnnotationsDirectoryItem + getFileBeginAddr());
     return pAnnotationsDirectoryItem->methods_size_;
 }
-//获取相应Class结构中的class_annotations_off_结构中parameters_size_字段值
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取相应Class结构中的class_annotations_off_结构中parameters_size_字段值
+ * 函数参数: nIndex 相应class的下标
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassAnnotationsParametersSizeValueFromIndex(uint nIndex)
 {
+    //获取对应class_def_item下的annotations_off字段值，其为该结构在文件的偏移
     PSTAnnotationsDirectoryItem pAnnotationsDirectoryItem = 
-        getClassAnnotationsDirectoryItemSTFromIndex(nIndex);
+        getClassAnnotationsDirectoryItemSTFileOffsetFromIndex(nIndex);
 	//如果pAnnotationsDirectoryItem无效则返回0
 	if (!pAnnotationsDirectoryItem)
 	{
 		return 0;
-	}
+    }
+    //加上首地址
+    pAnnotationsDirectoryItem = (PSTAnnotationsDirectoryItem)
+        ((DWORD)pAnnotationsDirectoryItem + getFileBeginAddr());
     return pAnnotationsDirectoryItem->parameters_size_;
-}    
-//根据相应Class结构中的interfaces_off_判断是否需要输出相关信息
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：根据相应Class结构中的interfaces_off_字段值判断是否需要输出相关信息
+ * 函数参数: nIndex 相应class的下标
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
 bool CMyDexObj::isClassNeedShowInterfacesString(uint nIndex)
 {
+    //获取指定下标的class_def_item结构
     PSTClassDefItem pCD = getClassDefSTFromId(nIndex);
+    //空指针返回否
+    if (!pCD)
+    {
+        return false;
+    }
     return pCD->interfaces_off_ != 0;
 }
-//获取相应Class结构中的class_interfaces_off_结构数据,返回值需要手动释放
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取相应Class结构中的class_interfaces_off_结构数据,返回值需要手动释放
+ * 函数参数: nIndex 相应class的下标
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getClassInterfacesStringFromIndex(uint nIndex)
 {
     char *result = new char[MAXBYTE * 4];
     result[0] = '\0';
     char temp[MAXBYTE];
-    //获取list_结构数量
+    //获取指定Class下标的interfaces_off_结构下的list_结构数量
     DWORD dwSize = getClassInterfaceListSizeFromIndex(nIndex);
-    //获取list_结构起始地址
+    //获取list_结构文件偏移地址
     PSTTypeItemList pTL = getClassInterfaceListSTFileOffsetFromIndex(nIndex);
 	/*  此时的pTL结构为
 		// Raw type_list. 
@@ -2388,24 +2556,29 @@ const char* CMyDexObj::getClassInterfacesStringFromIndex(uint nIndex)
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取指定Class下标的interfaces_off_字段指向的type_item_list结构在文件中的偏移
  * 函数参数: nIndex class_ids目标下标
- * 函数返回值：
+ * 函数返回值：结构文件偏移或空
  */
 ///////////////////////////////////////////////////////////////////////////
 PSTTypeItemList CMyDexObj::getClassInterfaceListSTFileOffsetFromIndex(uint nIndex)  
 {
     //获取ClassDef->interfaces_off_字段值
     DWORD dwOff = getClassInterfaceOffValueFromIndex(nIndex);
-	//如果interfaces_off_字段值为空则返回空
-	if (!dwOff)
+	//如果interfaces_off_字段值为-1则返回空指针
+	if (dwOff == U32ERROR)
 	{
 		return NULL;
 	}
-    //+文件起始地址即为结构地址
+    //直接返回这个字段值，其就是结构在文件的偏移
     PSTTypeItemList pTL = (PSTTypeItemList)
         (dwOff);
     return pTL;
 }
-//获取指定Class下标的interfaces_off_结构下的list_结构数量
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定Class下标的interfaces_off_结构下的list_结构数量
+ * 函数参数: nIndex class_ids目标下标
+ * 函数返回值：interfaces_off_结构下的list_结构数量
+ */
+///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassInterfaceListSizeFromIndex(uint nIndex)
 {
 	//拿偏移
@@ -2415,17 +2588,29 @@ uint32_t CMyDexObj::getClassInterfaceListSizeFromIndex(uint nIndex)
 	{
 		return 0;
 	}
-	//加首地址
+	//加首地址再取数量
 	pTL = (PSTTypeItemList)((DWORD)pTL + getFileBeginAddr());
     return pTL->size_;
 }
-//根据class_def_item->class_data_off_字段值判断是否需要输出
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：根据class_def_item->class_data_off_字段值判断是否需要输出
+ * 函数参数: nIndex class_ids目标下标
+ * 函数返回值：true false
+ */
+///////////////////////////////////////////////////////////////////////////
 bool CMyDexObj::isClassNeedShowClassDataString(uint nIndex)
 {
-	//对应class_data_off_字段值不为0则可以输出
-    return getClassClassDataOffValueFromIndex(nIndex) != 0;
+	//对应class_data_off_字段值不为0且不为-1则可以输出
+    return getClassClassDataOffValueFromIndex(nIndex) != 0 &&
+        getClassClassDataOffValueFromIndex(nIndex) != U32ERROR;
 }
-//获取相应Class结构中的class_data_off_结构数据,返回值需要手动释放
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取相应Class结构中的class_data_off_指向的
+                class_data_item结构字符串数据,返回值需要手动释放
+ * 函数参数: nIndex class_ids目标下标
+ * 函数返回值：字符串
+ */
+///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getClassClassDataStringFromIndex(uint nIndex)
 {
 	char * result = new char[MAXBYTE];
@@ -2439,40 +2624,63 @@ const char* CMyDexObj::getClassClassDataStringFromIndex(uint nIndex)
 			getClassClassDataVirtualMethodsSizeValueFromIndex(nIndex));
 	return result;
 }
-//获取指定Class结构中的STClassDataItem结构指定
-PSTClassDataItem CMyDexObj::getClassClassDataSTFromIndex(uint nIndex)
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item结构中的class_data_off字段值，
+                其为STClassDataItem结构文件偏移
+ * 函数参数: nIndex class_ids目标下标
+ * 函数返回值：结构在文件的偏移或异常空
+ */
+///////////////////////////////////////////////////////////////////////////
+PSTClassDataItem CMyDexObj::getClassClassDataSTFileOffsetFromIndex(uint nIndex)
 {
 	DWORD dwOff = getClassClassDataOffValueFromIndex(nIndex);
-	if(dwOff == 0)
+	if(dwOff == 0 || dwOff == U32ERROR)
 		return NULL;
-	PSTClassDataItem pCD = (PSTClassDataItem)(dwOff + getFileBeginAddr());
+	PSTClassDataItem pCD = (PSTClassDataItem)(dwOff);
 	return pCD;
 }
-//获取指定class_def_item->class_data_off_->static_fields_size字段值，这是LEB128类型数据
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->static_fields_size字段值，
+                这是LEB128类型数据
+ * 函数参数: nIndex class_ids目标下标
+ * 函数返回值：StaticFieldSizeValue
+ */
+///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassClassDataStaticFieldsSizeValueFromIndex(uint nIndex)
 {
-	//获取对应class_def_item->class_data_off_指向的结构指针，
-	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	//获取对应class_def_item->class_data_off_指向的结构文件偏移指针
+	PSTClassDataItem pCDI = getClassClassDataSTFileOffsetFromIndex(nIndex);
 	//注意这里当off为0时返回为空，需要特殊处理一下
-	if(pCDI == NULL)
+	if(!pCDI)
 		return 0;
+    //地址+首地址
+    pCDI = (PSTClassDataItem)(DWORD(pCDI) + getFileBeginAddr());
 	BYTE *pByte = (BYTE*)pCDI;
 	//第一个LEB128数据是static_fields_size字段
 	uint32_t nStaticFieldSizeValue = readLeb128(pByte);
 	uint nSize = getLeb128Size(pByte);
 	return nStaticFieldSizeValue;
 }
-//获取指定class_def_item->class_data_off_->instance_fields_size字段值，这是LEB128类型数据
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->instance_fields_size字段值，
+                这是LEB128类型数据
+ * 函数参数: nIndex class_ids目标下标
+ * 函数返回值：nInstanceFieldSizeValue
+ */
+///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassClassDataInstanceFieldsSizeValueFromIndex(uint nIndex)
 {
-	//第一个LEB128数据是static_fields_size字段
-	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	//获取对应class_def_item->class_data_off_指向的结构文件偏移指针
+	PSTClassDataItem pCDI = getClassClassDataSTFileOffsetFromIndex(nIndex);
 	//返回为空即没有这个类型的数据
-	if (pCDI == 0)
+	if (!pCDI)
 	{
 		return 0;
-	}
-	BYTE *pByte = (BYTE*)pCDI;
+    }
+    //地址+首地址
+    pCDI = (PSTClassDataItem)(DWORD(pCDI) + getFileBeginAddr());
+    BYTE *pByte = (BYTE*)pCDI;
+	//第一个LEB128数据是static_fields_size字段
 	uint32_t nStaticFieldSizeValue = readLeb128(pByte);
 	uint nSize = getLeb128Size(pByte);
 	//第二个LEB128数据是instance_fields_size字段
@@ -2481,16 +2689,25 @@ uint32_t CMyDexObj::getClassClassDataInstanceFieldsSizeValueFromIndex(uint nInde
 	nSize = getLeb128Size(pByte);
 	return nInstanceFieldSizeValue;
 }
-//获取指定class_def_item->class_data_off_->direct_methods_size字段值，这是LEB128类型数据
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->direct_methods_size字段值
+                这是LEB128类型数据
+ * 函数参数: nIndex class_ids目标下标
+ * 函数返回值：nDirectMethodsSizeValue
+ */
+///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassClassDataDirectMethodsSizeValueFromIndex(uint nIndex)
 {
-	//第一个LEB128数据是direct_methods_size字段
-	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+    //获取对应class_def_item->class_data_off_指向的结构文件偏移指针
+	PSTClassDataItem pCDI = getClassClassDataSTFileOffsetFromIndex(nIndex);
 	if (pCDI == NULL)
 	{
 		return 0;
-	}
-	BYTE *pByte = (BYTE*)pCDI;
+    }
+    //地址+首地址
+    pCDI = (PSTClassDataItem)(DWORD(pCDI) + getFileBeginAddr());
+    BYTE *pByte = (BYTE*)pCDI;
+	//第一个LEB128数据是direct_methods_size字段
 	uint32_t nStaticFieldSizeValue = readLeb128(pByte);
 	uint nSize = getLeb128Size(pByte);
 	//第二个LEB128数据是instance_fields_size字段
@@ -2503,17 +2720,25 @@ uint32_t CMyDexObj::getClassClassDataDirectMethodsSizeValueFromIndex(uint nIndex
 	nSize = getLeb128Size(pByte);
 	return nDirectMethodsSizeValue;
 }
-//获取指定class_def_item->class_data_off_->virtual_methods_size字段值，
-//这是LEB128类型数据表示这个类含有的virtual_method数量
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->virtual_methods_size字段值
+                这是LEB128类型数据表示这个类含有的virtual_method数量
+ * 函数参数: nIndex class_ids目标下标
+ * 函数返回值：virtual_method数量
+ */
+///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassClassDataVirtualMethodsSizeValueFromIndex(uint nIndex)
 {
-	//第一个LEB128数据是static_fields_size字段
-	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+    //获取对应class_def_item->class_data_off_指向的结构文件偏移指针
+	PSTClassDataItem pCDI = getClassClassDataSTFileOffsetFromIndex(nIndex);
 	if (pCDI == NULL)
 	{
 		return 0;
-	}
-	BYTE *pByte = (BYTE*)pCDI;
+    }
+    //地址+首地址
+    pCDI = (PSTClassDataItem)(DWORD(pCDI) + getFileBeginAddr());
+    BYTE *pByte = (BYTE*)pCDI;
+	//第一个LEB128数据是static_fields_size字段
 	uint32_t nStaticFieldSizeValue = readLeb128(pByte);
 	uint nSize = getLeb128Size(pByte);
 	//第二个LEB128数据是instance_fields_size字段
@@ -2530,33 +2755,69 @@ uint32_t CMyDexObj::getClassClassDataVirtualMethodsSizeValueFromIndex(uint nInde
 	nSize = getLeb128Size(pByte);
 	return nVirtualMethodsSizeValue;
 }
-//获取指定class_def_item->class_data_off_->static_fields_size字段实际占用的字节长度
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->static_fields_size字段实际占用的字节长度
+ * 函数参数: nIndex class_ids目标下标
+ * 函数返回值：static_fields_size字段leb数据实际占用的字节长度
+ */
+///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassClassDataStaticFieldsSizeLenFromIndex(uint nIndex)
 {
-	//第一个LEB128数据是static_fields_size字段
-	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
-	BYTE *pByte = (BYTE*)pCDI;
+    //获取对应class_def_item->class_data_off_指向的结构文件偏移指针
+    PSTClassDataItem pCDI = getClassClassDataSTFileOffsetFromIndex(nIndex);
+    if (!pCDI)
+    {
+        return 0;
+    }
+    //地址+首地址
+    pCDI = (PSTClassDataItem)(DWORD(pCDI) + getFileBeginAddr());
+    BYTE *pByte = (BYTE*)pCDI;
+    //第一个LEB128数据是static_fields_size字段
 	uint nSize = getLeb128Size(pByte);
 	return nSize;
 }
-//获取指定class_def_item->class_data_off_->instance_fields_size字段实际占用的字节长度
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->instance_fields_size字段实际占用的字节长度
+ * 函数参数: nIndex class_ids目标下标
+ * 函数返回值：instance_fields_size字段leb数据实际占用的字节长度
+ */
+///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassClassDataInstanceFieldsSizeLenFromIndex(uint nIndex)
 {
+    //获取对应class_def_item->class_data_off_指向的结构文件偏移指针
+    PSTClassDataItem pCDI = getClassClassDataSTFileOffsetFromIndex(nIndex);
+    if (!pCDI)
+    {
+        return 0;
+    }
+    //地址+首地址
+    pCDI = (PSTClassDataItem)(DWORD(pCDI) + getFileBeginAddr());
+    BYTE *pByte = (BYTE*)pCDI;
 	//第一个LEB128数据是static_fields_size字段
-	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
-	BYTE *pByte = (BYTE*)pCDI;
 	uint nSize = getLeb128Size(pByte);
 	//第二个LEB128数据是instance_fields_size字段
 	pByte = (BYTE *)(DWORD(pByte) + nSize);
 	nSize = getLeb128Size(pByte);
 	return nSize;
 }
-//获取指定class_def_item->class_data_off_->direct_methods_size字段实际占用的字节长度
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->direct_methods_size字段实际占用的字节长度
+ * 函数参数: nIndex class_ids目标下标
+ * 函数返回值：direct_methods_size字段实际占用的字节长度
+ */
+///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassClassDataDirectMethodsSizeLenFromIndex(uint nIndex)
 {
+    //获取对应class_def_item->class_data_off_指向的结构文件偏移指针
+    PSTClassDataItem pCDI = getClassClassDataSTFileOffsetFromIndex(nIndex);
+    if (!pCDI)
+    {
+        return 0;
+    }
+    //地址+首地址
+    pCDI = (PSTClassDataItem)(DWORD(pCDI) + getFileBeginAddr());
+    BYTE *pByte = (BYTE*)pCDI;
 	//第一个LEB128数据是static_fields_size字段
-	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
-	BYTE *pByte = (BYTE*)pCDI;
 	uint nSize = getLeb128Size(pByte);
 	//第二个LEB128数据是instance_fields_size字段
 	pByte = (BYTE *)(DWORD(pByte) + nSize);
@@ -2566,16 +2827,24 @@ uint32_t CMyDexObj::getClassClassDataDirectMethodsSizeLenFromIndex(uint nIndex)
 	nSize = getLeb128Size(pByte);
 	return nSize;
 }
-//获取指定class_def_item->class_data_off_->virtual_methods_size字段实际占用的字节长度
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->virtual_methods_size字段实际占用的字节长度
+ * 函数参数: nIndex class_ids目标下标
+ * 函数返回值：virtual_methods_size字段实际占用的字节长度
+ */
+///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassClassDataVirtualMethodsSizeLenFromIndex(uint nIndex)
 {
-	//第一个LEB128数据是static_fields_size字段
-	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
-	if (pCDI == NULL)
+    //获取对应class_def_item->class_data_off_指向的结构文件偏移指针
+    PSTClassDataItem pCDI = getClassClassDataSTFileOffsetFromIndex(nIndex);
+	if (!pCDI)
 	{
 		return 0;
 	}
-	BYTE *pByte = (BYTE*)pCDI;
+    //地址+首地址
+    pCDI = (PSTClassDataItem)(DWORD(pCDI) + getFileBeginAddr());
+    BYTE *pByte = (BYTE*)pCDI;
+	//第一个LEB128数据是static_fields_size字段
 	uint nSize = getLeb128Size(pByte);
 	//第二个LEB128数据是instance_fields_size字段
 	pByte = (BYTE *)(DWORD(pByte) + nSize);
@@ -2588,12 +2857,24 @@ uint32_t CMyDexObj::getClassClassDataVirtualMethodsSizeLenFromIndex(uint nIndex)
 	nSize = getLeb128Size(pByte);
 	return nSize;
 }
-//获取class_def_item->class_data_off_各字段数量指定后的首地址，其依次为实际数据的属性
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取class_def_item->class_data_off_各字段数量指定后的首地址，其依次为实际数据的属性
+ * 函数参数: nIndex class_ids目标下标
+ * 函数返回值：字段数量指定后的首地址或者空
+ */
+///////////////////////////////////////////////////////////////////////////
 BYTE *CMyDexObj::getClassClassDataAttributeAddrFromIndex(uint nIndex)
 {
+    //获取对应class_def_item->class_data_off_指向的结构文件偏移指针
+    PSTClassDataItem pCDI = getClassClassDataSTFileOffsetFromIndex(nIndex);
+    if (!pCDI)
+    {
+        return 0;
+    }
+    //地址+首地址
+    pCDI = (PSTClassDataItem)(DWORD(pCDI) + getFileBeginAddr());
+    BYTE *pByte = (BYTE*)pCDI;
 	//第一个LEB128数据是static_fields_size字段
-	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
-	BYTE *pByte = (BYTE*)pCDI;
 	uint nSize = getLeb128Size(pByte);
 	//第二个LEB128数据是instance_fields_size字段
 	pByte = (BYTE *)(DWORD(pByte) + nSize);
@@ -2607,23 +2888,36 @@ BYTE *CMyDexObj::getClassClassDataAttributeAddrFromIndex(uint nIndex)
 	pByte = (BYTE *)(DWORD(pByte) + nSize);
 	return pByte;
 }
-//指定class_def_item->class_data_off_->static_fields_size字段值是否为0
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：指定class_def_item->class_data_off_->static_fields_size字段值是否为0
+ * 函数参数: nIndex class_ids目标下标
+ * 函数返回值：有数量返回true，否则返回false
+ */
+///////////////////////////////////////////////////////////////////////////
 bool CMyDexObj::isClassNeedShowStaticFieldsStringFromIndex(uint nIndex)
 {
 	uint32_t nSize = getClassClassDataStaticFieldsSizeValueFromIndex(nIndex);
 	return nSize != 0;
 }
-/*
- * 获取指定class_def_item->class_data_off_->static_fields_size字段的字符串,返回值需要手动释放
- * 返回的数据形式："[%d]method_idx_diff:%X access_flags:%X"
- *
- */
+///////////////////////////////////////////////////////////////////////////
+//函数功能：获取指定class_def_item->class_data_off_->static_fields_size字段的字符串,返回值需要手动释放
+//          返回的数据形式："[%d]method_idx_diff:%X access_flags:%X"
+//函数参数: nIndex class_ids目标下标
+//函数返回值：字符串指针 
+///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getClassStaticFieldsStringFromIndex(uint nIndex, uint nFieldIndex)
 {
 	char *result = new char[MAXBYTE * 4];
 	result[0] = '\0';
 	//获取class_data_off_地址加上文件起始得到4个leb128 size的地址
-	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	PSTClassDataItem pCDI = getClassClassDataSTFileOffsetFromIndex(nIndex);
+    //没有数据则直接返回
+    if (!pCDI)
+    {
+        return result;
+    }
+    //偏移地址+首地址
+    pCDI = (PSTClassDataItem)(DWORD(pCDI) + getFileBeginAddr());
 	//隔开4个leb128数据长度即为属性首地址
 	BYTE *pByte = getNextSTAddr((BYTE*)pCDI, 4);
 	//获取static_fields_size_字段值，即其个数
@@ -2649,7 +2943,12 @@ const char* CMyDexObj::getClassStaticFieldsStringFromIndex(uint nIndex, uint nFi
 	}
 	return result;
 }
-//获取指定class_def_item->class_data_off_->static_fields->field_idx_diff字段值,这是一个LEB128数据
+///////////////////////////////////////////////////////////////////////////
+//函数功能：获取指定class_def_item->class_data_off_->
+//            static_fields->field_idx_diff字段值,这是一个LEB128数据
+//函数参数: nIndex class_ids目标下标
+//函数返回值：field_idx_diff leb字段实际值
+///////////////////////////////////////////////////////////////////////////
 DWORD CMyDexObj::getClassStaticFieldsFieldIdxDiffValueIndex(BYTE *pByte)
 {
 	//第一个leb128数据为field_idx_diff字段值
@@ -2657,7 +2956,13 @@ DWORD CMyDexObj::getClassStaticFieldsFieldIdxDiffValueIndex(BYTE *pByte)
 	int nSize = getLeb128Size(pByte);
 	return nfield_idx_diff;
 }
-//获取指定class_def_item->class_data_off_->static_fields->access_flags字段值,这是一个LEB128数据
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->
+                static_fields->access_flags字段值,这是一个LEB128数据
+ * 函数参数: nIndex class_ids目标下标
+ * 函数返回值：access_flags leb字段实际值
+ */
+///////////////////////////////////////////////////////////////////////////
 DWORD CMyDexObj::getClassStaticFieldsAccessFlagsValueIndex(BYTE *pByte)
 {
 	//第一个leb128数据为field_idx_diff字段值
@@ -2669,7 +2974,13 @@ DWORD CMyDexObj::getClassStaticFieldsAccessFlagsValueIndex(BYTE *pByte)
 	nSize = getLeb128Size(pByte);
 	return naccess_flags;
 }
-//获取下一个FieldST的BYTE地址，默认2个LEB128数据为界
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指针起始指定个LEB128数据的BYTE地址，默认2个LEB128数据为界
+ * 函数参数: pByte 起始leb128地址
+                nLeb128Count 要隔开的leb128数据
+ * 函数返回值：原指针+参数个数的leb数据长度
+ */
+///////////////////////////////////////////////////////////////////////////
 BYTE* CMyDexObj::getNextSTAddr(BYTE *pByte, int nLeb128Count)
 {
 	int nSize = 0;
@@ -2681,19 +2992,30 @@ BYTE* CMyDexObj::getNextSTAddr(BYTE *pByte, int nLeb128Count)
 	}
 	return pByte;
 }
-
-//指定class_def_item->class_data_off_->instance_fields_size字段值是否为0
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：测试指定class_def_item[nIndex]->class_data_off_->instance_fields_size字段值是否为0
+                来判断是否有instance_fileds数据需要输出
+ * 函数参数: nIndex class_def_item数组下标
+ * 函数返回值：字段不为0返回true
+ */
+///////////////////////////////////////////////////////////////////////////
 bool CMyDexObj::isClassNeedShowInstanceFieldsStringFromIndex(uint nIndex)
 {
 	uint32_t nSize = getClassClassDataInstanceFieldsSizeValueFromIndex(nIndex);
 	return nSize != 0;
 }
-//获取指定class_def_item->class_data_off_->instance_fields_size字段的字符串,返回值需要手动释放
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->instance_fields_size字段的字符串,返回值需要手动释放
+ * 函数参数: nIndex class_def_item数组下标
+                nFieldIndex field下标
+ * 函数返回值：数据字符串
+ */
+///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getClassInstanceFieldsStringFromIndex(uint nIndex, uint nFieldIndex)
 {
 	char *result = new char[MAXBYTE * 4];
 	result[0] = '\0';
-	//获取static_fields_size_字段值，即其个数
+	//获取instance_fields_size_字段值，即其个数
 	uint nstatic_fields_size = getClassClassDataInstanceFieldsSizeValueFromIndex(nIndex);
 	//避免万一，当该字段为0时不作遍历
 	if (nstatic_fields_size == 0 || nFieldIndex < 0 || nFieldIndex > nstatic_fields_size)
@@ -2701,13 +3023,18 @@ const char* CMyDexObj::getClassInstanceFieldsStringFromIndex(uint nIndex, uint n
 		return result;
 	}
 	//获取instance_fields_size对应的结构首地址
-	BYTE *pByte = getClassInstanceFieldsAddrFromIndex(nIndex);
+	BYTE *pByte = getClassInstanceFieldsSTAddrFromIndex(nIndex);
+    //instance_fields_size字段为0或class_data_off为0会造成返回空指针
+    if (!pByte)
+    {
+        return result;
+    }
 	//目标字段条件符合预期时进行遍历
 	for (uint i = 0; i < nstatic_fields_size; i++)
 	{
 		if (i == nFieldIndex)
 		{
-			sprintf(result, "[%d]method_idx_diff:%X access_flags:%X", 
+			sprintf(result, "[%d]field_idx_diff:%X access_flags:%X", 
 				i,
 				getClassStaticFieldsFieldIdxDiffValueIndex(pByte),
 				getClassStaticFieldsAccessFlagsValueIndex(pByte));
@@ -2718,7 +3045,12 @@ const char* CMyDexObj::getClassInstanceFieldsStringFromIndex(uint nIndex, uint n
 	}
 	return result;
 }
-//获取指定class_def_item->class_data_off_->instance_fields_size->field_idx_diff字段值,这是一个LEB128数据
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->instance_fields_size->field_idx_diff字段值,这是一个LEB128数据
+ * 函数参数: pByte InstanceFields结构{leb128 field_idx_diff; leb128 access_flags;}首地址
+ * 函数返回值：field_idx_diff字段实际值
+ */
+///////////////////////////////////////////////////////////////////////////
 DWORD CMyDexObj::getClassInstanceFieldsFieldIdxDiffValueIndex(BYTE *pByte)
 {
 	//第一个leb128数据为field_idx_diff字段值
@@ -2726,7 +3058,12 @@ DWORD CMyDexObj::getClassInstanceFieldsFieldIdxDiffValueIndex(BYTE *pByte)
 	int nSize = getLeb128Size(pByte);
 	return nfield_idx_diff;
 }
-//获取指定class_def_item->class_data_off_->instance_fields_size->access_flags字段值,这是一个LEB128数据
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->instance_fields_size->access_flags字段值,这是一个LEB128数据
+ * 函数参数: pByte InstanceFields结构{leb128 field_idx_diff; leb128 access_flags;}首地址
+ * 函数返回值：access_flags字段实际值
+ */
+///////////////////////////////////////////////////////////////////////////
 DWORD CMyDexObj::getClassInstanceFieldsAccessFlagsValueIndex(BYTE *pByte)
 {
 	//第一个leb128数据为field_idx_diff字段值
@@ -2738,8 +3075,14 @@ DWORD CMyDexObj::getClassInstanceFieldsAccessFlagsValueIndex(BYTE *pByte)
 	nSize = getLeb128Size(pByte);
 	return naccess_flags;
 }
-//获取指定class_def_item->class_data_off_->instance_fields指向的数据地址,没有则返回空指针！！！
-BYTE* CMyDexObj::getClassInstanceFieldsAddrFromIndex(uint nIndex)
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->instance_fields指向的数据地址,
+                instance_fields_size字段为0或class_data_off为0会造成返回空指针！！！
+ * 函数参数: nIndex class_def_item数组下标
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+BYTE* CMyDexObj::getClassInstanceFieldsSTAddrFromIndex(uint nIndex)
 {
 	//意外处理
 	uint nSize = getClassClassDataInstanceFieldsSizeValueFromIndex(nIndex);
@@ -2747,8 +3090,14 @@ BYTE* CMyDexObj::getClassInstanceFieldsAddrFromIndex(uint nIndex)
 	{
 		return NULL;
 	}
-	//首先拿这个Class的地址
-	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+	//首先拿这个class_data_item的偏移地址
+    PSTClassDataItem pCDI = getClassClassDataSTFileOffsetFromIndex(nIndex);
+    if (!pCDI)
+    {
+        return NULL;
+    }
+    //结构体首地址+文件首地址
+    pCDI = (PSTClassDataItem)(DWORD(pCDI) + getFileBeginAddr());
 	//跳过4个leb表示的各个字段的数量
 	BYTE *pByte = getNextSTAddr((BYTE*)pCDI, 4);
 	//看下前面有几个static_fields数据
@@ -2757,14 +3106,24 @@ BYTE* CMyDexObj::getClassInstanceFieldsAddrFromIndex(uint nIndex)
 	pByte = getNextSTAddr(pByte, nSize * 2);
 	return pByte;
 }
-
-//指定class_def_item->class_data_off_->direct_methods_size字段值是否为0
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：指定class_def_item->class_data_off_->direct_methods_size字段值是否为0
+ * 函数参数: nIndex class_def_item数组下标
+ * 函数返回值：有数据返回true否则false
+ */
+///////////////////////////////////////////////////////////////////////////
 bool CMyDexObj::isClassNeedShowDirectMethodsStringFromIndex(uint nIndex)
 {
 	uint32_t nSize = getClassClassDataDirectMethodsSizeValueFromIndex(nIndex);
 	return nSize != 0;
 }
-//获取指定class_def_item->class_data_off_->direct_methods_size字段的字符串,返回值需要手动释放
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->direct_methods_size字段的字符串,返回值需要手动释放
+ * 函数参数: nIndex class_def_item数组下标
+                nFieldIndex class_def_item结构下的field数组下标
+ * 函数返回值：有数据返回true否则false
+ */
+///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getClassDirectMethodsStringFromIndex(uint nIndex, uint nFieldIndex)
 {
 	char *result = new char[MAXBYTE * 4];
@@ -2777,7 +3136,12 @@ const char* CMyDexObj::getClassDirectMethodsStringFromIndex(uint nIndex, uint nF
 		return result;
 	}
 	//获取direct_methods_size对应的结构首地址
-	BYTE *pByte = getClassDirectMethodsAddrFromIndex(nIndex);
+    BYTE *pByte = getClassDirectMethodsSTAddrFromIndex(nIndex);
+    //direct_methods_size字段为0或class_data_off为0会造成返回空指针
+    if (!pByte)
+    {
+        return result;
+    }
 	//目标字段条件符合预期时进行遍历
 	for (uint i = 0; i < ndirect_method_size; i++)
 	{
@@ -2795,7 +3159,12 @@ const char* CMyDexObj::getClassDirectMethodsStringFromIndex(uint nIndex, uint nF
 	}
 	return result;
 }
-//获取指定class_def_item->class_data_off_->direct_methods_size->field_idx_diff字段值,这是一个LEB128数据
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->direct_methods_size->method_idx_diff字段值,这是一个LEB128数据
+ * 函数参数: pByte directItem结构{leb128 method_idx_diff; leb128 access_flags; leb128 code_off;}首地址
+ * 函数返回值：method_idx_diff字段实际值
+ */
+///////////////////////////////////////////////////////////////////////////
 DWORD CMyDexObj::getClassDirectMethodsMethodIdxDiffValueIndex(BYTE *pByte)
 {
 	//第一个leb128数据为method_idx_diff字段值
@@ -2803,7 +3172,12 @@ DWORD CMyDexObj::getClassDirectMethodsMethodIdxDiffValueIndex(BYTE *pByte)
 	int nSize = getLeb128Size(pByte);
 	return nfield_idx_diff;
 }
-//获取指定class_def_item->class_data_off_->direct_methods_size->access_flags字段值,这是一个LEB128数据
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->direct_methods_size->access_flags字段值,这是一个LEB128数据
+ * 函数参数: pByte directItem结构{leb128 method_idx_diff; leb128 access_flags; leb128 code_off;}首地址
+ * 函数返回值：access_flags字段实际值
+ */
+///////////////////////////////////////////////////////////////////////////
 DWORD CMyDexObj::getClassDirectMethodsAccessFlagsValueIndex(BYTE *pByte)
 {
 	//第一个leb128数据为method_idx_diff字段值
@@ -2815,7 +3189,12 @@ DWORD CMyDexObj::getClassDirectMethodsAccessFlagsValueIndex(BYTE *pByte)
 	nSize = getLeb128Size(pByte);
 	return naccess_flags;
 }
-//获取指定class_def_item->class_data_off_->direct_methods_size->code_off字段值,这是一个LEB128数据
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->direct_methods_size->code_off字段值,这是一个LEB128数据
+ * 函数参数: pByte directItem结构{leb128 method_idx_diff; leb128 access_flags; leb128 code_off;}首地址
+ * 函数返回值：code_off字段实际值
+ */
+///////////////////////////////////////////////////////////////////////////
 DWORD CMyDexObj::getClassDirectMethodsCodeOffValueIndex(BYTE *pByte)
 {
 	//第一个leb128数据为method_idx_diff字段值
@@ -2831,7 +3210,13 @@ DWORD CMyDexObj::getClassDirectMethodsCodeOffValueIndex(BYTE *pByte)
 	nSize = getLeb128Size(pByte);
 	return ncode_off;
 }
-//获取指定class_def_item->class_data_off_->direct_methods_size->code_off字段值,这是一个LEB128数据
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->direct_methods_size->code_off字段值,这是一个LEB128数据
+ * 函数参数: nIndex class_def_item数组下标
+                nFieldIndex 参数class_def_item对应结构下field下标
+ * 函数返回值：code_off字段实际值
+ */
+///////////////////////////////////////////////////////////////////////////
 DWORD CMyDexObj::getClassDirectMethodsCodeOffValueIndex(uint nIndex, uint nFieldIndex)
 {
     //获取direct_method_size_字段值，即其个数
@@ -2841,8 +3226,13 @@ DWORD CMyDexObj::getClassDirectMethodsCodeOffValueIndex(uint nIndex, uint nField
     {
         return 0;
     }
-    //获取virtual_methods_size对应的结构首地址,三个leb128数据分别表示methods_idx_diff,access_flags,code_off
-    BYTE *pByte = getClassDirectMethodsAddrFromIndex(nIndex);
+    //获取direct_methods_size对应的结构首地址,三个leb128数据分别表示methods_idx_diff,access_flags,code_off
+    BYTE *pByte = getClassDirectMethodsSTAddrFromIndex(nIndex);
+    //direct_methods_size字段为0或class_data_off为0会造成返回空指针
+    if (!pByte)
+    {
+        return 0;
+    }
     //目标字段条件符合预期时进行遍历
     for (uint i = 0; i < ndirect_method_size; i++)
     {
@@ -2855,8 +3245,13 @@ DWORD CMyDexObj::getClassDirectMethodsCodeOffValueIndex(uint nIndex, uint nField
     }
     return 0;
 }
-//获取指定class_def_item->class_data_off_->direct_methods_size指向的数据地址,没有则返回空指针！！！
-BYTE* CMyDexObj::getClassDirectMethodsAddrFromIndex(uint nIndex)
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->direct_methods_size对应的数据地址,没有则返回空指针！！！
+ * 函数参数: nIndex class_def_item数组下标
+ * 函数返回值：对应的数据首地址
+ */
+///////////////////////////////////////////////////////////////////////////
+BYTE* CMyDexObj::getClassDirectMethodsSTAddrFromIndex(uint nIndex)
 {
 	//意外处理
 	uint nSize = getClassClassDataDirectMethodsSizeValueFromIndex(nIndex);
@@ -2865,7 +3260,13 @@ BYTE* CMyDexObj::getClassDirectMethodsAddrFromIndex(uint nIndex)
 		return NULL;
 	}
 	//首先拿这个Class的地址
-	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+    PSTClassDataItem pCDI = getClassClassDataSTFileOffsetFromIndex(nIndex);
+    if (!pCDI)
+    {
+        return NULL;
+    }
+    //结构体首地址+文件首地址
+    pCDI = (PSTClassDataItem)(DWORD(pCDI) + getFileBeginAddr());
 	//跳过4个leb表示的各个字段的数量
 	BYTE *pByte = getNextSTAddr((BYTE*)pCDI, 4);
 	//看下前面有几个static_fields数据
@@ -2876,11 +3277,16 @@ BYTE* CMyDexObj::getClassDirectMethodsAddrFromIndex(uint nIndex)
 	pByte = getNextSTAddr(pByte, nSize * 2);
 	return pByte;
 }
-//获取指定class_def_item->class_data_off_->direct_methods_size->data_off_是否需要输出
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定class_def_item->class_data_off_->direct_methods_size->data_off_是否需要输出
+ * 函数参数: nIndex class_def_item数组下标
+ * 函数返回值：对应direct_methods_size->data_off_字符不为0则返回true,否则返回false
+ */
+///////////////////////////////////////////////////////////////////////////
 bool CMyDexObj::isClassDirectMethodsNeedShowDataOffStringFromIndex(uint nIndex)
 {
     //获取指定下标下的class_def_item->class_data_off_->direct_methods_size对应的首地址
-    BYTE *pByte = getClassDirectMethodsAddrFromIndex(nIndex); //getClassVirtualMethodsAddrFromIndex
+    BYTE *pByte = getClassDirectMethodsSTAddrFromIndex(nIndex); //getClassVirtualMethodsAddrFromIndex
     if(pByte == NULL)
         return false;
     
@@ -2897,6 +3303,10 @@ bool CMyDexObj::isClassDirectMethodsNeedShowDataOffStringFromIndex(uint nIndex)
 const char* CMyDexObj::getClassDirectMethodsDataOffStringFromIndex(uint nClassIndex, uint nDirectMethodIndex)
 {
 	DWORD dwOff = getClassDirectMethodsCodeOffValueIndex(nClassIndex, nDirectMethodIndex);
+    if (!dwOff)
+    {
+        return "getClassDirectMethodsCodeOffValueIndex == 0";
+    }
 	return getClassDirectMethodsDataOffStringFromIndex(dwOff);
 }
 ///////////////////////////////////////////////////////////////////////////
@@ -2924,51 +3334,97 @@ const char* CMyDexObj::getClassDirectMethodsDataOffStringFromIndex(DWORD dwOff)
         );
     return result;
 }
-//获取data_off_结构下的register_size_字段值
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取dwOff指向code_item结构的register_size_字段值
+ * 函数参数: dwOff code_item结构的首地址
+ * 函数返回值：register_size_字段值
+ */
+///////////////////////////////////////////////////////////////////////////
 uint16_t CMyDexObj::getClassDirectMethodsDataOffRegisterSizeValueFromIndex(DWORD dwOff)
 {
     return getClassVirtualMethodsDataOffRegisterSizeValueFromIndex(dwOff);
 }
-//获取data_off_结构下的ins_size_字段值
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取dwOff指向code_item结构的ins_size_字段值
+ * 函数参数: dwOff code_item结构的首地址
+ * 函数返回值：ins_size_字段值
+ */
+///////////////////////////////////////////////////////////////////////////
 uint16_t CMyDexObj::getClassDirectMethodsDataOffInsSizeValueFromIndex(DWORD dwOff)
 {
     return getClassVirtualMethodsDataOffInsSizeValueFromIndex(dwOff);
 }
-//获取data_off_结构下的out_size_字段值
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取dwOff指向code_item结构的out_size_字段值
+ * 函数参数: dwOff code_item结构的首地址
+ * 函数返回值：out_size_字段值
+ */
+///////////////////////////////////////////////////////////////////////////
 uint16_t CMyDexObj::getClassDirectMethodsDataOffOutsSizeValueFromIndex(DWORD dwOff)
 {
     return getClassVirtualMethodsDataOffOutsSizeValueFromIndex(dwOff);
 }
-//获取data_off_结构下的tries_size_字段值
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取dwOff指向code_item结构的tries_size_字段值
+ * 函数参数: dwOff code_item结构的首地址
+ * 函数返回值：tries_size_字段值
+ */
+///////////////////////////////////////////////////////////////////////////
 uint16_t CMyDexObj::getClassDirectMethodsDataOffTriesSizeValueFromIndex(DWORD dwOff)
 {
     return getClassVirtualMethodsDataOffTriesSizeValueFromIndex(dwOff);
 }
-//获取data_off_结构下的debug_info_off_字段值
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取dwOff指向code_item结构的debug_info_off_字段值
+ * 函数参数: dwOff code_item结构的首地址
+ * 函数返回值：debug_info_off_字段值
+ */
+///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassDirectMethodsDataOffDebugInfoOffValueFromIndex(DWORD dwOff)
 {
     return getClassVirtualMethodsDataOffDebugInfoOffValueFromIndex(dwOff);
 }
-//获取data_off_结构下的insns数据大小，实际是WORD的个数
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取dwOff指向code_item结构下的insns数据大小，实际是WORD的个数
+ * 函数参数: dwOff code_item结构的首地址
+ * 函数返回值：insns数据字段值
+ */
+///////////////////////////////////////////////////////////////////////////
 uint32_t CMyDexObj::getClassDirectMethodsDataOffInsnsSizeInCodeUnitsValueFromIndex(DWORD dwOff)
 {
     return getClassVirtualMethodsDataOffInsnsSizeInCodeUnitsValueFromIndex(dwOff);
 }
-//获取data_off_结构下的insns数据起始地址
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取dwOff指向code_item结构下的insns数据(机器码)起始地址
+ * 函数参数: dwOff code_item结构的首地址
+ * 函数返回值：insns数据(机器码)起始地址
+ */
+///////////////////////////////////////////////////////////////////////////
 WORD* CMyDexObj::getClassDirectMethodsDataOffInsnsFileOffsetFromIndex(DWORD dwOff)
 {
     return getClassVirtualMethodsDataOffInsnsFileOffsetFromIndex(dwOff);
 }
-
-//获取ClassDirectMethodsDataOffInsns下的机器码，返回值手动释放
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取指定类指定directmethod的机器码，返回值手动释放
+ * 函数参数: nClassIndex 类下标
+                nDirectMethodIndex 方法下标
+ * 函数返回值：机器码字符串
+ */
+///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getClassDirectMethodsDataOffInsnsMachineCode(uint nClassIndex, uint nDirectMethodIndex)
 {
-	//获取指定类下的指定下标DirectMethodsCodeOff字段值，传这个文件偏移由getClassDirectMethodsDataOffInsnsMachineCode函数去获取
+	//获取指定类下的指定下标DirectMethods的CodeOff字段值，即文件偏移，
+    //传这个文件偏移由getClassDirectMethodsDataOffInsnsMachineCode函数去获取
 	DWORD dwOff = getClassDirectMethodsCodeOffValueIndex(nClassIndex, nDirectMethodIndex);
+    //getClassDirectMethodsDataOffInsnsMachineCode内部有判断空指针
 	return getClassDirectMethodsDataOffInsnsMachineCode((PSTCodeItem)dwOff);
 }
-//获取ClassDirectMethodsDataOffInsns下的机器码，返回值手动释放
-//pSTCI pSTCIFileOffset
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：解析pSTCI结构读取其中的directmethod机器码，返回值手动释放
+ * 函数参数: pSTCI STCodeItem文件偏移指针
+ * 函数返回值：机器码字符串
+ */
+///////////////////////////////////////////////////////////////////////////
 const char* CMyDexObj::getClassDirectMethodsDataOffInsnsMachineCode(PSTCodeItem pSTCI)
 {
     if (!pSTCI)
@@ -2976,9 +3432,15 @@ const char* CMyDexObj::getClassDirectMethodsDataOffInsnsMachineCode(PSTCodeItem 
 		char *result = new char[1];
         return result;
     }
+    //偏移+首地址
 	pSTCI = (PSTCodeItem)((DWORD)pSTCI + getFileBeginAddr());
 	uint32_t dwSize = pSTCI->insns_size_in_code_units_;
-	//" %02X %02X"
+    if (!dwSize)
+    {
+        char *result = new char[1];
+        return result;
+    }
+	//" %02X %02X"每一个循环都是6个字节，+一个字节结尾
     char *result = new char[dwSize * 6 + 1];
 	result[0] = '\0';
     char temp[MAXBYTE];
@@ -2998,8 +3460,12 @@ const char* CMyDexObj::getClassDirectMethodsDataOffInsnsMachineCode(PSTCodeItem 
 	}
     return result;
 }
-
-//指定class_def_item->class_data_off_->virtual_methods_size字段值是否为0
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：指定class_def_item->class_data_off_->virtual_methods_size字段值是否为0
+ * 函数参数: nIndex class_def_item数组下标
+ * 函数返回值：virtual_methods_size字段值为0返回false,否则返回true
+ */
+///////////////////////////////////////////////////////////////////////////
 bool CMyDexObj::isClassNeedShowVirtualMethodsStringFromIndex(uint nIndex)
 {
 	uint32_t nSize = getClassClassDataVirtualMethodsSizeValueFromIndex(nIndex);
@@ -3094,7 +3560,13 @@ BYTE* CMyDexObj::getClassVirtualMethodsAddrFromIndex(uint nIndex)
 		return NULL;
 	}
 	//首先拿这个Class的地址
-	PSTClassDataItem pCDI = getClassClassDataSTFromIndex(nIndex);
+    PSTClassDataItem pCDI = getClassClassDataSTFileOffsetFromIndex(nIndex);
+    if (!pCDI)
+    {
+        return NULL;
+	}
+    //结构体首地址+文件首地址
+    pCDI = (PSTClassDataItem)(DWORD(pCDI) + getFileBeginAddr());
 	//跳过4个leb表示的各个字段的数量
 	BYTE *pByte = getNextSTAddr((BYTE*)pCDI, 4);
 	//看下前面有几个static_fields数据,每个static_fields结构都是两个LEB128数据

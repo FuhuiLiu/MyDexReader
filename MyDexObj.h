@@ -89,11 +89,11 @@ public:
     //拿proto_id_item指定下标方法的参数列表字符串,返回值需要手工释放    
     const char* getProtoIdsParametersStringFromIndex(uint nProtoIdsIndex); 
     //拿指定下标proto_id_item结构中的ShortyIdx字段值
-    DWORD getProtoIdsShortyIdxValueFromIndex(uint nProtoIdsIndex); 
+    uint32_t getProtoIdsShortyIdxValueFromIndex(uint nProtoIdsIndex); 
     //拿指定下标proto_id_item结构中的ReturnTypeIdx字段值 
-    DWORD getProtoIdsReturnTypeIdxValueFromIndex(uint nProtoIdsIndex);         
+    uint16_t getProtoIdsReturnTypeIdxValueFromIndex(uint nProtoIdsIndex);         
     //获取指定下标方法的参数列表字段值
-    DWORD getProtoIdsParametersOffValueFromIndex(uint nProtoIdsIndex);
+    uint32_t getProtoIdsParametersOffValueFromIndex(uint nProtoIdsIndex);
     //拿指定下标proto_id_item结构中的Parameter字段值
     //DWORD getProtoIdsParametersValueFromIndex(uint nProtoIdsIndex); 
 
@@ -125,15 +125,20 @@ public:
     //拿field_id_item数组指定下标的name_idx_表示的字符串
 	const char* getFieldNameIdxStringFromIndex(uint nIndex); 
 
-    //初始化method_id_item必要结构
+    //初始化读取method_id_item必要结构
     bool initMethodIdItemST();        
-    //收集method_id_item表
+    //收集method_id_item表数据
     bool ColletionMethodIdItem();     
-    //拿method_id_list指定下标的结构首地址
+    /*
+		拿method_id_list数组指定下标的结构首地址
+		{ uint16_t class_idx_; 
+          uint16_t proto_idx_;
+          uint32_t name_idx_;}
+	*/
     STMethodIdItem* getMethodIdSTFromIndex(uint nIndex);   
-    //获取MethodIdSize个数
-    DWORD getMethodIdSizeFromSave();    
-    //显示方法字符串
+    //获取MethodIdsSize个数
+    DWORD getMethodIdsSizeFromSave();    
+    //显示指定方法下标的字符串，形式为“类名.方法名”，已经弃用
     void showMethodStringAt(uint nIndex);               
     //拿method_id_item数组指定下标方法的类字符串
 	const char* getMethodClassIdxStringFromIndex(uint nIndex); 
@@ -141,19 +146,19 @@ public:
 	const char* getMethodProtoIdxStringFromIndex(uint nIndex);
     //拿method_id_item数组指定下标方法的方法名字符串
 	const char* getMethodNameIdxStringFromIndex(uint nIndex); 
-    //拿method_id_item数组指定下标的class_idx_字段值
+    //拿method_id_item数组指定下标的class_idx_字段值，，其实际为字符串在type_ids的下标
 	uint16_t getMethodClassIdxValueFromIndex(uint nIndex); 
-    //拿method_id_item数组指定下标的proto_idx_字段值
+    //拿method_id_item数组指定下标的proto_idx_字段值，其实际为字符串在proto_ids的下标
 	uint16_t getMethodProtoIdxValueFromIndex(uint nIndex);
-    //拿method_id_item数组指定下标的name_idx_字段值
+    //拿method_id_item数组指定下标的name_idx_字段值，其实际为字符串在string_ids的下标
 	uint32_t getMethodNameIdxValueFromIndex(uint nIndex); 
 
-    //初始化classdef_item必要结构
+    //初始化class_def_item必要结构
     bool initClassDefItemST();        
-    //收集ClassDef_item表
+    //收集Class_Def_item表
     bool ColletionClassDefItem();     
-    //拿类信息列表(ClassDef_list)指定下标的结构指针
-    STClassDefItem* getClassDefSTFromId(uint nIndex);   
+    //拿类信息列表(Class_Def_list)指定下标的结构指针
+    PSTClassDefItem getClassDefSTFromId(uint nIndex);   
     //获取ClassDefSize个数
     DWORD getClassDefSizeFromSave();    
     //获取class_def_item下标结构中的class_idx_字段值
@@ -177,20 +182,21 @@ public:
     //获取class_def_item下标结构中的static_values_off_字段值
     uint32_t getClassStaticValuesOffValueFromIndex(uint nIndex);        
     
-    //获取指定下标的ClassDef结构中的class_idx_的字符串
+    //获取指定下标的ClassDef结构中的class_idx_字段指向的类路径字符串
 	const char* getClassClassIdxStringFromIndex(uint nIndex);			
-    //获取指定下标的ClassDef结构中的access_flags_的字符串,返回值需要手动做数组释放
+    //获取指定下标的ClassDef结构中的access_flags_字段指向的访问标志字符串,
+    //返回值需要手动做数组释放
 	const char* getClassAccessFlagsStringFromIndex(uint nIndex);		
-    //获取指定下标的ClassDef结构中的superclass_idx_的字符串
+    //获取指定下标的ClassDef结构中的superclass_idx_字段指向的父类路径字符串
 	const char* getClassSuperClassIdxStringFromIndex(uint nIndex);		
-    //获取指定下标的ClassDef结构中的source_file_idx_的字符串
+    //获取指定下标的ClassDef结构中的source_file_idx_字段指向的字符串
 	const char* getClassSourceFileIdxStringFromIndex(uint nIndex);		
-    //根据相应Class结构中的class_annotations_off_判断是否需要输出相关信息
+    //根据相应Class结构中的class_annotations_off_字段值判断是否需要输出相关信息
     bool isClassNeedShowAnnotationsString(uint nIndex);
-    //获取相应Class结构中的class_annotations_off_结构数据,返回值需要手动释放
+    //获取相应Class结构中的class_annotations_off_结构数据字符串,返回值需要手动释放
     const char* getClassAnnotationStringFromIndex(uint nIndex);
-    //获取指定下标的STAnnotationsDirectoryItem结构指针
-    PSTAnnotationsDirectoryItem getClassAnnotationsDirectoryItemSTFromIndex(uint nIndex);
+    //获取指定class_def_item结构下标的STAnnotationsDirectoryItem结构文件偏移指针
+    PSTAnnotationsDirectoryItem getClassAnnotationsDirectoryItemSTFileOffsetFromIndex(uint nIndex);
     
     //获取相应Class结构中的class_annotations_off_结构中class_annotations_off_字段值
     uint32_t getClassAnnotationsClassAnnotationsOffValueFromIndex(uint nIndex);
@@ -200,9 +206,8 @@ public:
     uint32_t getClassAnnotationsMethodsSizeValueFromIndex(uint nIndex);
     //获取相应Class结构中的class_annotations_off_结构中parameters_size_字段值
     uint32_t getClassAnnotationsParametersSizeValueFromIndex(uint nIndex);
-
     
-    //根据相应Class结构中的interfaces_off_判断是否需要输出相关信息
+    //根据相应Class结构中的interfaces_off_字段值判断是否需要输出相关信息
     bool isClassNeedShowInterfacesString(uint nIndex);
     //获取相应Class结构中的class_interfaces_off_结构数据,返回值需要手动释放
     const char* getClassInterfacesStringFromIndex(uint nIndex);
@@ -213,10 +218,11 @@ public:
 
 	//根据class_def_item->class_data_off_字段值判断是否需要输出
 	bool isClassNeedShowClassDataString(uint nIndex);
-    //获取相应Class结构中的class_data_off_结构数据,返回值需要手动释放
+    //获取相应Class结构中的class_data_off_指向的class_data_item结构字符串数据,
+    //返回值需要手动释放
     const char* getClassClassDataStringFromIndex(uint nIndex);
-	//获取指定Class结构中的STClassDataItem结构指定
-	PSTClassDataItem getClassClassDataSTFromIndex(uint nIndex);
+	//获取指定class_def_item结构中的class_data_off字段值，其为STClassDataItem结构文件偏移
+	PSTClassDataItem getClassClassDataSTFileOffsetFromIndex(uint nIndex);
 	//获取指定class_def_item->class_data_off_->static_fields_size字段值，这是LEB128类型数据
 	uint32_t getClassClassDataStaticFieldsSizeValueFromIndex(uint nIndex);
 	//获取指定class_def_item->class_data_off_->instance_fields_size字段值，这是LEB128类型数据
@@ -246,7 +252,7 @@ public:
 	DWORD getClassStaticFieldsFieldIdxDiffValueIndex(BYTE *pByte);
 	//获取指定class_def_item->class_data_off_->static_fields->access_flags字段值,这是一个LEB128数据
 	DWORD getClassStaticFieldsAccessFlagsValueIndex(BYTE *pByte);
-	//获取下一个FieldST的BYTE地址，默认2个LEB128数据为界
+	//获取指针起始指定个LEB128数据的BYTE地址，默认2个LEB128数据为界
 	BYTE* getNextSTAddr(BYTE *pByte, int nLeb128Count = 2);
 	
 	//指定class_def_item->class_data_off_->instance_fields_size字段值是否为0
@@ -258,7 +264,7 @@ public:
 	//获取指定class_def_item->class_data_off_->instance_fields_size->access_flags字段值,这是一个LEB128数据
 	DWORD getClassInstanceFieldsAccessFlagsValueIndex(BYTE *pByte);
 	//获取指定class_def_item->class_data_off_->instance_fields指向的数据地址,没有则返回空指针！！！
-	BYTE* getClassInstanceFieldsAddrFromIndex(uint nIndex);
+	BYTE* getClassInstanceFieldsSTAddrFromIndex(uint nIndex);
 	
 	//指定class_def_item->class_data_off_->direct_methods_size字段值是否为0
 	bool isClassNeedShowDirectMethodsStringFromIndex(uint nIndex);
@@ -272,8 +278,8 @@ public:
     DWORD getClassDirectMethodsCodeOffValueIndex(BYTE *pByte);
     //获取指定class_def_item->class_data_off_->virtual_methods_size->code_off字段值,这是一个LEB128数据
 	DWORD getClassDirectMethodsCodeOffValueIndex(uint nIndex, uint nItemIndex);
-	//获取指定class_def_item->class_data_off_->direct_methods_size指向的数据地址,没有则返回空指针！！！
-	BYTE* getClassDirectMethodsAddrFromIndex(uint nIndex);
+	//获取指定class_def_item->class_data_off_->direct_methods_size对应的数据地址,没有则返回空指针！！！
+	BYTE* getClassDirectMethodsSTAddrFromIndex(uint nIndex);
     //获取指定class_def_item->class_data_off_->direct_methods_size->data_off_是否需要输出
     bool isClassDirectMethodsNeedShowDataOffStringFromIndex(uint nIndex);
     //获取指定class_def_item->class_data_off_->direct_methods_size->data_off_指向结构体数据
@@ -282,23 +288,23 @@ public:
     const char* getClassDirectMethodsDataOffStringFromIndex(uint nClassIndex, uint nDirectMethodIndex);
     //获取指定class_def_item->class_data_off_->direct_methods_size->data_off_指向结构首地址
     PSTCodeItem getClassDirectMethodsDataOffSTFromeIndex(uint nIndex);
-    //获取data_off_结构下的register_size_字段值
+    //获取dwOff指向code_item结构的register_size_字段值
     uint16_t getClassDirectMethodsDataOffRegisterSizeValueFromIndex(DWORD dwOff);
-    //获取data_off_结构下的ins_size_字段值
+    //获取dwOff指向code_item结构的ins_size_字段值
     uint16_t getClassDirectMethodsDataOffInsSizeValueFromIndex(DWORD dwOff);
-    //获取data_off_结构下的out_size_字段值
+    //获取dwOff指向code_item结构的out_size_字段值
     uint16_t getClassDirectMethodsDataOffOutsSizeValueFromIndex(DWORD dwOff);
-    //获取data_off_结构下的tries_size_字段值
+    //获取dwOff指向code_item结构的tries_size_字段值
     uint16_t getClassDirectMethodsDataOffTriesSizeValueFromIndex(DWORD dwOff);
-    //获取data_off_结构下的debug_info_off_字段值
+    //获取dwOff指向code_item结构的debug_info_off_字段值
     uint32_t getClassDirectMethodsDataOffDebugInfoOffValueFromIndex(DWORD dwOff);
-    //获取data_off_结构下的insns数据大小，实际是WORD的个数
+    //获取dwOff指向code_item结构下的insns数据大小，实际是WORD的个数
     uint32_t getClassDirectMethodsDataOffInsnsSizeInCodeUnitsValueFromIndex(DWORD dwOff);
-    //获取data_off_结构下的insns数据文件偏移起始地址
+    //获取dwOff指向code_item结构下的insns数据(机器码)起始地址
     WORD* getClassDirectMethodsDataOffInsnsFileOffsetFromIndex(DWORD dwOff);
     //获取ClassDirectMethodsDataOffInsns下的机器码，返回值手动释放
     const char* getClassDirectMethodsDataOffInsnsMachineCode(PSTCodeItem pSTCIFileOffset);
-    //获取指定class指定DirectMethods的机器码，返回值手动释放
+    //获取指定类指定directmethod的机器码，返回值手动释放
     const char* getClassDirectMethodsDataOffInsnsMachineCode(uint nClassIndex, uint nDirectMethodIndex);
 	
 	//指定class_def_item->class_data_off_->virtual_methods_size字段值是否为0

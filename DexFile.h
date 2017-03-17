@@ -14,6 +14,8 @@ typedef unsigned int uint;
 #define kSha1DigestSize 20
 #define kDexEndianConstant 0x12345678;
 #define EERROR ((BOOL)-1)
+#define U16ERROR ((uint16_t)-1)
+#define U32ERROR ((uint32_t)-1)
 
 //获取对应MapItem->type的含义字符串
 extern "C" const char* getMapItemName(uint nIndex);
