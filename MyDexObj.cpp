@@ -824,9 +824,44 @@ STTypeItemList *CMyDexObj::getProtoIdsTypeItemListSTFileOffsetFromIndex(uint nIn
 //     }
 //     return NULL;
 }
+const char* translateStanderType(char *pParemter)
+{
+    const char *pReal = NULL;
+    switch(pParemter[0])
+    {
+    case 'B':
+        pReal = "byte";
+        break;
+    case 'Z':
+        pReal = "boolean";
+        break;
+    case 'C':
+        pReal = "char";
+        break;
+    case 'I':
+        pReal = "int";
+        break;
+    case 'F':
+        pReal = "float";
+        break;
+    case 'S':
+        pReal = "short";
+        break;
+    case 'J':
+        pReal = "long";
+        break;
+    case 'D':
+        pReal = "double";
+        break;
+    case 'V':
+        pReal = "void";
+        break;
+    }
+    return pReal;
+}
 ///////////////////////////////////////////////////////////////////////////
-/* 函数功能：组合proto_id_list数组指定下标的函数原型信息,返回值需要手动释放
- * 函数参数: nIndex要获取的proto_ids下标
+/* 函数功能：拿proto_id_list数组指定下标的函数原型信息,返回值需要手动释放
+ * 函数参数: nIndex要获取的下标
  * 函数返回值：该下标的结构体指针
  */
 ///////////////////////////////////////////////////////////////////////////
@@ -839,8 +874,9 @@ const char* CMyDexObj::getProtoIdsProtoStringFromIndex(uint nIndex)
     if(pST != NULL)
     {
         //返回值（参数列表）
-        sprintf(Tempret, "%s (", getTypeIdStringFromIndex(pST->return_type_idx_));
-		//获取parameter_off字段值
+        char *pRetString = (char*)getTypeIdStringFromIndex(pST->return_type_idx_);
+        char *pReal = (char *)translateStanderType(pRetString);
+        sprintf(Tempret, "%s (", pReal ? pReal : pRetString);
         DWORD dwOff = getProtoIdsParametersOffValueFromIndex(nIndex);
         //参数列表不为空才需要输出 
         if(dwOff)
@@ -849,7 +885,9 @@ const char* CMyDexObj::getProtoIdsProtoStringFromIndex(uint nIndex)
             STTypeItemList *pTL = (STTypeItemList *)(dwOff + getFileBeginAddr());
             for (DWORD i = 0; i < pTL->size_; i++)
             {
-                sprintf(temp, " %s", getTypeIdStringFromIndex(pTL->list_[i].type_idx_));
+                pRetString = (char*)getTypeIdStringFromIndex(pTL->list_[i].type_idx_);
+                pReal = (char *)translateStanderType(pRetString);
+                sprintf(temp, pReal ? " %s;" : " %s", pReal ? pReal : pRetString);
                 strcat(Tempret, temp);
             }
         }
@@ -859,6 +897,41 @@ const char* CMyDexObj::getProtoIdsProtoStringFromIndex(uint nIndex)
     }
     return Tempret;
 }
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：组合proto_id_list数组指定下标的函数原型信息,返回值需要手动释放
+ * 函数参数: nIndex要获取的proto_ids下标
+ * 函数返回值：该下标的结构体指针
+ */
+///////////////////////////////////////////////////////////////////////////
+// const char* CMyDexObj::getProtoIdsProtoStringFromIndex(uint nIndex)
+// {
+//     char temp[MAXBYTE];
+//     char *Tempret = new char[MAXBYTE *4];
+//     Tempret[0] = '\0';
+//     STProtoIdItem* pST = getProtoIdsSTFromIndex(nIndex);
+//     if(pST != NULL)
+//     {
+//         //返回值（参数列表）
+//         sprintf(Tempret, "%s (", getTypeIdStringFromIndex(pST->return_type_idx_));
+// 		//获取parameter_off字段值
+//         DWORD dwOff = getProtoIdsParametersOffValueFromIndex(nIndex);
+//         //参数列表不为空才需要输出 
+//         if(dwOff)
+//         {
+//             //循环输出参数
+//             STTypeItemList *pTL = (STTypeItemList *)(dwOff + getFileBeginAddr());
+//             for (DWORD i = 0; i < pTL->size_; i++)
+//             {
+//                 sprintf(temp, " %s", getTypeIdStringFromIndex(pTL->list_[i].type_idx_));
+//                 strcat(Tempret, temp);
+//             }
+//         }
+//         else
+//             strcat(Tempret ,"void");
+//         strcat(Tempret, ")");
+//     }
+//     return Tempret;
+// }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：初始化field_id_item必要结构
  * 函数参数: 
@@ -1152,6 +1225,85 @@ DWORD CMyDexObj::getMethodIdsSizeFromSave()
 {
     ASSERT(m_nMethodIdItemSize != 0);
     return m_nMethodIdItemSize;
+}
+///////////////////////////////////////////////////////////////////////////
+/* 函数功能：获取method_ids指定下标综合字符串信息,返回值需要手动delete[]
+ * 函数参数: 
+ * 函数返回值：
+ */
+///////////////////////////////////////////////////////////////////////////
+const char* CMyDexObj::getMethodIdsStringFromIndex(uint nIndex)
+{
+    char *result = new char[MAXBYTE * 4];
+    result[0] = '\0';
+
+    ASSERT(m_pMethodIdItem != NULL);
+    ASSERT(getMethodIdsSizeFromSave() > nIndex && nIndex >= 0);
+    STMethodIdItem *pSTMI = &m_pMethodIdItem[nIndex];
+    if (!pSTMI)
+    {
+        return result;
+    }
+    char *pRetString = (char*)getMethodIdsRetStringFromIndex(pSTMI->proto_idx_);
+    char *pParemterString = (char*)getMethodIdsParemeterStringFromIndex(pSTMI->proto_idx_);
+
+    sprintf(result, "%s %s.%s(%s)", pRetString,
+        getTypeIdStringFromIndex(pSTMI->class_idx_),
+        getStringIdStringFromIndex(pSTMI->name_idx_),
+        pParemterString);
+    delete[] pRetString;
+    delete[] pParemterString;
+    return result;
+}
+//获取method_ids指定下标返回类型,返回值需要手动delete[]
+const char* CMyDexObj::getMethodIdsRetStringFromIndex(uint nIndex)
+{
+    //getProtoIdStringFromId返回形式“返回类型 (参数列表)”
+    char* pProto = (char*)getProtoIdsProtoStringFromIndex(nIndex);
+    //所以取第一个空格位置
+    char *pdest = strchr(pProto, ' ');
+    //空格位-起始位=返回类型字符串长度
+    int nLocation = pdest - pProto;
+    //返回类型字符串长度 + 1 = new 必须的长度
+    int nSize = nLocation + sizeof(char);
+    char *pRet = new char[nSize];
+    if (!pRet)
+    {
+        return "new error!";
+    }
+    //置空
+    memset(pRet, 0, nSize);
+    //复制字符串
+    strncpy(pRet, pProto, nLocation);
+    delete[] pProto;
+    return pRet;
+}
+//获取method_ids指定下标参数类型,返回值需要手动delete[]
+const char* CMyDexObj::getMethodIdsParemeterStringFromIndex(uint nIndex)
+{
+    //getProtoIdStringFromId返回形式“返回类型 (参数列表)”
+    char* pProto = (char*)getProtoIdsProtoStringFromIndex(nIndex);
+    //定位(符号位置
+    char *pdest = strchr(pProto, '(');
+    //整个proto字符串长度
+    int nProtoStringSize = strlen(pProto);
+    //得到(符号前的长度
+    int nLocation = pdest - pProto;
+    //除去返回类型字符串外剩下的长度
+    int nNeed = nProtoStringSize - nLocation;
+    //new 需要用到的长度空间
+    int nSize = nNeed + sizeof(char);
+    char *pRet = new char[nSize];
+    if (!pRet)
+    {
+        return "new error!";
+    }
+    //置空
+    memset(pRet, 0, nSize);
+    //复制参数列表
+    strncpy(pRet, &pProto[nLocation] + sizeof(char), nNeed - sizeof(char) * 2);
+    delete[] pProto;
+    return pRet;
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：显示指定方法下标的字符串，形式为“类名.方法名”
@@ -3147,11 +3299,25 @@ const char* CMyDexObj::getClassDirectMethodsStringFromIndex(uint nIndex, uint nF
 	{
 		if (i == nFieldIndex)
 		{
-			sprintf(result, "[%d]method_idx_diff:%X access_flags:%X code_off:%X", 
-				i,
-				getClassDirectMethodsMethodIdxDiffValueIndex(pByte),
-				getClassDirectMethodsAccessFlagsValueIndex(pByte),
-				getClassDirectMethodsCodeOffValueIndex(pByte));
+// 			sprintf(result, "[%d]method_idx_diff:%X access_flags:%X code_off:%X", 
+// 				i,
+// 				getClassDirectMethodsMethodIdxDiffValueIndex(pByte),
+// 				getClassDirectMethodsAccessFlagsValueIndex(pByte),
+// 				getClassDirectMethodsCodeOffValueIndex(pByte));
+// 			break;
+            
+            int nFieldIdxDiffValue = 0;
+            int nBase = getClassDirectMethodsBaseMethodIdxFromIndex(nIndex);
+            int nSub = getClassDirectMethodsMethodIdxSubFromIndex(nIndex, nFieldIndex);
+            nFieldIdxDiffValue = nFieldIndex != 0 ? 
+                nBase
+                + nSub : nBase;
+            
+            sprintf(result, "[%d]method_idx_diff:%s access_flags:%X code_off:%X", 
+                i,
+                getMethodIdsStringFromIndex(nFieldIdxDiffValue),
+                getClassDirectMethodsAccessFlagsValueIndex(pByte),
+                getClassDirectMethodsCodeOffValueIndex(pByte));
 			break;
 		}
 		//每一个fields占3个leb128类型
@@ -3276,6 +3442,39 @@ BYTE* CMyDexObj::getClassDirectMethodsSTAddrFromIndex(uint nIndex)
 	//每个static_fields结构都是两个LEB128数据，所以跳过nSize*2个LEB数据就对了
 	pByte = getNextSTAddr(pByte, nSize * 2);
 	return pByte;
+}
+//获取指定类DirectMethod指向的数据结构的method_idx基数
+uint32_t CMyDexObj::getClassDirectMethodsBaseMethodIdxFromIndex(uint nIndex)
+{
+    //获取这个首地址
+    BYTE *pByte = getClassDirectMethodsSTAddrFromIndex(nIndex);
+    if (!pByte)
+    {
+        return 0;
+    }
+    //首地址即为leb128类型的method_idx_diff值
+    return readLeb128(pByte);
+}
+//获取指定类DirectMethod指向的数据结构的idx差总额
+uint32_t CMyDexObj::getClassDirectMethodsMethodIdxSubFromIndex(uint nIndex, uint nMethodIndex)
+{
+    //获取这个首地址
+    BYTE *pByte = getClassDirectMethodsSTAddrFromIndex(nIndex);
+    if (!pByte)
+    {
+        return 0;
+    }
+    //跳过3个leb128到下一结构
+    pByte = getNextSTAddr(pByte, 3);
+    int nSub = 0;
+    //累加
+    for (uint i = 1; i <= nMethodIndex; i++)
+    {
+        nSub += readLeb128(pByte);
+        //移动到下一个结构地址
+        pByte = getNextSTAddr(pByte, 3);
+    }
+    return nSub;
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取指定class_def_item->class_data_off_->direct_methods_size->data_off_是否需要输出
@@ -3501,23 +3700,31 @@ const char* CMyDexObj::getClassVirtualMethodsSTStringFromIndex(uint nIndex, uint
 	for (uint i = 0; i < nvirtual_method_size; i++)
 	{
 		if (i == nFieldIndex)
-		{
-            //获取对应结构的access_flags字段
-			DWORD dwFlags = getClassVirtualMethodsAccessFlagsValueIndex(pByte);
-// 			sprintf(result, "[%d]method_idx_diff:%X access_flags:%X code_off:%X", 
-// 				i,
-// 				getClassVirtualMethodsFieldIdxDiffValueIndex(pByte),
-// 				dwFlags,
-// 				getClassVirtualMethodsCodeOffValueIndex(pByte));
-            //解析成字符串
-			const char* p = getClassAccessFlagsString(dwFlags);
-            //组合到结构
-			sprintf(result, "[%d]method_idx_diff:%X access_flags:%s code_off:%X", 
-				i,
-				getClassVirtualMethodsFieldIdxDiffValueIndex(pByte),
-				p,
-				getClassVirtualMethodsCodeOffValueIndex(pByte));
-			delete[] (char*)p;
+        {
+            DWORD dwFlags = getClassVirtualMethodsAccessFlagsValueIndex(pByte);
+            uint32_t nFieldIdxDiffValue = getClassVirtualMethodsFieldIdxDiffValueIndex(pByte);
+            // 			printf("[%d]method_idx_diff:%X access_flags:%X code_off:%X", 
+            // 				i,
+            // 				nFieldIdxDiffValue,
+            // 				dwFlags,
+            // 				getClassVirtualMethodsCodeOffValueIndex(pByte));
+            
+            const char* p = getClassAccessFlagsString(dwFlags);
+            //如果不是当前第一个method则nFieldIdxDiffValue必须加上基数跟之前基数后到当前间的差值
+            //getClassVirtualMethodsMethodIdxSubFromIndex负责差值计算工作
+            int nBase = getClassVirtualMethodsBaseMethodIdxFromIndex(nIndex);
+            int nSub = getClassVirtualMethodsMethodIdxSubFromIndex(nIndex, nFieldIndex);
+            nFieldIdxDiffValue = nFieldIndex != 0 ? 
+                nBase
+                + nSub : nBase;
+            const char* pMethodString = getMethodIdsStringFromIndex(nFieldIdxDiffValue);
+            sprintf(result, "[%d]method_idx_diff:%s access_flags:%s code_off:%X", 
+                i,
+                pMethodString,
+                p,
+                getClassVirtualMethodsCodeOffValueIndex(pByte));
+            delete[] (char*)p;
+            delete[] (char*)pMethodString;
 			break;
 		}
 		//每一个fields占3个leb128类型
@@ -3627,6 +3834,39 @@ BYTE* CMyDexObj::getClassVirtualMethodsSTAddrFromIndex(uint nIndex)
 	//所以跳过LEB数据就对了
 	pByte = getNextSTAddr(pByte, nSize);
 	return pByte;
+}
+//获取指定类VirtualMethod指向的数据结构的method_idx基数
+uint32_t CMyDexObj::getClassVirtualMethodsBaseMethodIdxFromIndex(uint nIndex)
+{
+    //获取这个首地址
+    BYTE *pByte = getClassVirtualMethodsSTAddrFromIndex(nIndex);
+    if (!pByte)
+    {
+        return 0;
+    }
+    //首地址即为leb128类型的method_idx_diff值
+    return readLeb128(pByte);
+}
+//获取指定类VirtualMethod指向的数据结构的method_idx基数
+uint32_t CMyDexObj::getClassVirtualMethodsMethodIdxSubFromIndex(uint nIndex, uint nMethodIndex)
+{
+    //获取这个首地址
+    BYTE *pByte = getClassVirtualMethodsSTAddrFromIndex(nIndex);
+    if (!pByte)
+    {
+        return 0;
+    }
+    //跳过3个leb128到下一结构
+    pByte = getNextSTAddr(pByte, 3);
+    int nSub = 0;
+    //累加
+    for (uint i = 1; i <= nMethodIndex; i++)
+    {
+        nSub += readLeb128(pByte);
+        //移动到下一个结构地址
+        pByte = getNextSTAddr(pByte, 3);
+    }
+    return nSub;
 }
 ///////////////////////////////////////////////////////////////////////////
 /* 函数功能：获取指定class_def_item->class_data_off_->

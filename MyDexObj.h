@@ -138,6 +138,12 @@ public:
     STMethodIdItem* getMethodIdSTFromIndex(uint nIndex);   
     //获取MethodIdsSize个数
     DWORD getMethodIdsSizeFromSave();    
+    //获取method_ids指定下标综合字符串信息,返回值需要手动delete[]
+    const char* getMethodIdsStringFromIndex(uint nIndex);
+    //获取method_ids指定下标返回类型,返回值需要手动delete[]
+    const char* getMethodIdsRetStringFromIndex(uint nIndex);      
+    //获取method_ids指定下标参数类型,返回值需要手动delete[]
+    const char* getMethodIdsParemeterStringFromIndex(uint nIndex);   
     //显示指定方法下标的字符串，形式为“类名.方法名”，已经弃用
     void showMethodStringAt(uint nIndex);               
     //拿method_id_item数组指定下标方法的类字符串
@@ -279,7 +285,11 @@ public:
     //获取指定class_def_item->class_data_off_->virtual_methods_size->code_off字段值,这是一个LEB128数据
 	DWORD getClassDirectMethodsCodeOffValueIndex(uint nIndex, uint nItemIndex);
 	//获取指定class_def_item->class_data_off_->direct_methods_size对应的数据地址,没有则返回空指针！！！
-	BYTE* getClassDirectMethodsSTAddrFromIndex(uint nIndex);
+    BYTE* getClassDirectMethodsSTAddrFromIndex(uint nIndex);
+    //获取指定类DirectMethod指向的数据结构的method_idx基数
+    uint32_t getClassDirectMethodsBaseMethodIdxFromIndex(uint nIndex);
+    //获取指定类DirectMethod指向的数据结构的idx差总额
+    uint32_t getClassDirectMethodsMethodIdxSubFromIndex(uint nIndex, uint nMethodIndex);
     //获取指定class_def_item->class_data_off_->direct_methods_size->data_off_是否需要输出
     bool isClassDirectMethodsNeedShowDataOffStringFromIndex(uint nIndex);
     //获取指定class_def_item->class_data_off_->direct_methods_size->data_off_指向结构体数据
@@ -323,6 +333,10 @@ public:
 	DWORD getClassVirtualMethodsCodeOffValueFromIndex(uint nIndex, uint nItemIndex);
 	//获取指定class_def_item->class_data_off_->virtual_methods_size指向的数据首地址,没有则返回空指针！！！
     BYTE* getClassVirtualMethodsSTAddrFromIndex(uint nIndex);
+    //获取指定类VirtualMethod指向的数据结构的method_idx基数
+    uint32_t getClassVirtualMethodsBaseMethodIdxFromIndex(uint nIndex);
+    //获取指定类VirtualMethod指向的数据结构的idx差总额
+    uint32_t getClassVirtualMethodsMethodIdxSubFromIndex(uint nIndex, uint nMethodIndex);
     //获取指定class_def_item->class_data_off_->virtual_methods_size->data_off_是否需要输出
     bool isClassVirturlMethodsNeedShowDataOffStringFromIndex(uint nIndex);
     //获取指定data_off_字段指向的方法信息字符串，返回值需要手动释放delete[]   
